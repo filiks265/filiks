@@ -1,9 +1,11 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useNavigate } from "react-router";
 import { useKeyboard } from "@opentui/react";
 import { TextAttributes } from "@opentui/core";
 import { useTheme } from "../../providers/theme";
 import { useKeyboardLayer } from "../../providers/keyboard-layer";
-import { getUser } from "../../lib/auth";
+import { useAuth } from "../../hooks/use-auth";
+import { apiClient } from "../../lib/api-client";
 import { SessionInfoPanel } from "./session-info-panel";
 import { ContextsPanel } from "./contexts-panel";
 import { TodoPanel } from "./todo-panel";
@@ -30,7 +32,30 @@ export function Sidebar({ session, parts, streaming }: Props) {
   const [visible, setVisible] = useState(true);
   const { isTopLayer } = useKeyboardLayer();
   const { colors } = useTheme();
-  const user = getUser();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const [recentSessions, setRecentSessions] = useState<
+    { id: string; title: string; createdAt: string }[]
+  >([]);
+
+  useEffect(() => {
+    let ignore = false;
+    const fetchRecent = async () => {
+      try {
+        const res = await apiClient.sessions.$get();
+        if (!res.ok || ignore) return;
+        const data = await res.json();
+        if (!ignore) setRecentSessions(data.slice(0, 3));
+      } catch {
+        // Silently fail for sidebar
+      }
+    };
+    fetchRecent();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   useKeyboard(
     useCallback(
@@ -63,6 +88,19 @@ export function Sidebar({ session, parts, streaming }: Props) {
             <text fg={colors.text}>
               {user.name ?? user.email ?? user.id}
             </text>
+          </Panel>
+        )}
+        {recentSessions.length > 0 && (
+          <Panel title="Recent Sessions" defaultOpen={false}>
+            {recentSessions.map((s) => (
+              <text
+                key={s.id}
+                fg={colors.textMuted}
+                onMouseDown={() => navigate(`/sessions/${s.id}`)}
+              >
+                {s.title.length > 30 ? s.title.slice(0, 30) + "…" : s.title}
+              </text>
+            ))}
           </Panel>
         )}
         <ContextsPanel />

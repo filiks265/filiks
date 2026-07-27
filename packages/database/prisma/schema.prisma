@@ -12,45 +12,17 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Role {
-  USER
-  ASSISTANT
-  ERROR
-}
-
-enum Mode {
-  BUILD
-  PLAN
-}
-
-enum MessageStatus {
-  COMPLETE
-  INTERRUPTED
-}
-
 model Session {
   id String @id @default(cuid())
-  UserId String
+  userId String
   title String
-  cwd String?
   createdAt DateTime @default(now())
   UpdatedAt DateTime @updatedAt
-  messages Message[]
-  @@index([UserId])
+  messages Json @default("[]")
+  @@index([userId])
 }
 
-model Message {
-  id String @id @default(cuid())
-  SessionId String
-  role Role
-  status MessageStatus
-  model String
-  content String
-  parts Json?
-  mode Mode
-  duration Int?
-  createdAt DateTime @default(now())
-  session Session @relation(fields: [SessionId], references: [id],onDelete: Cascade)
-  @@index([SessionId])
-}
+
+
+
 

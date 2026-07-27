@@ -1,3 +1,6 @@
+import { tool } from 'ai';
+
+
 export {
     SUPPORTED_CHAT_MODELS,
     ZEN_MODELS,
@@ -16,11 +19,11 @@ export {
 } from "./models";
 
 export {
-    toolCallArgsSchema,
-    messagePartSchema,
-    messagePartsSchema,
-    chatStreamEventSchema,
-    type messagePart,
-    type ChatStreamEvent,
+    Mode,
+    modeSchema,
+    toolInputSchemas,
+    getToolContracts,
+    type ToolContracts,
+    type ModeType,
 } from "./schemas";
 

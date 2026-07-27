@@ -10,6 +10,18 @@ type AuthData = {
 const AUTH_DIR = join(homedir(), ".filiks");
 const AUTH_FILE = join(AUTH_DIR, "auth.json");
 
+type AuthListener = () => void;
+const listeners = new Set<AuthListener>();
+
+export function onAuthChange(listener: AuthListener): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+function dispatchAuthChange() {
+  listeners.forEach(l => l());
+}
+
 export function getAuth(): AuthData | null {
     try {
         const data = readFileSync(AUTH_FILE, "utf8");
@@ -46,6 +58,7 @@ export function saveAuth(data: AuthData) {
         mkdirSync(AUTH_DIR, {mode: 0o700});
     }
     writeFileSync(AUTH_FILE, JSON.stringify(data), {mode: 0o600});
+    dispatchAuthChange();
 }
 
 export function clearAuth() {
@@ -54,5 +67,6 @@ export function clearAuth() {
     } catch {
         // File doesn't exist
     }
+    dispatchAuthChange();
 }
 
