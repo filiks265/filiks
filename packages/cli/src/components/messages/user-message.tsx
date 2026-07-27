@@ -1,10 +1,10 @@
 import { useTheme } from "../../providers/theme";
 import { EmptyBorder } from "../border";
-import { Mode } from "@filiks/database/enums";
+import { Mode, type ModeType } from "@filiks/shared";
 
 type Props = {
   message: string;
-  mode: Mode;
+  mode: ModeType;
 };
 
 export function UserMessage({ message, mode }: Props) {

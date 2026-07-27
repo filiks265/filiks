@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useDialog } from "../../providers/dialog";
+import { useToast } from "../../providers/toast";
 import { DialogSearchList } from "../dialog-search-list";
 import { TextAttributes } from "@opentui/core";
 import type { SupportedChatModel, SupportedChatModelId } from "@filiks/shared";
@@ -60,6 +61,7 @@ export const ModelsDialogContent = ({
   onSelectModel,
 }: ModelsDialogContentProps) => {
   const dialog = useDialog();
+  const toast = useToast();
   const [searchValue, setSearchValue] = useState("");
 
   const entries = useMemo(
@@ -71,9 +73,10 @@ export const ModelsDialogContent = ({
     (entry: ListEntry) => {
       if (entry.kind !== "model") return;
       onSelectModel(entry.id);
+      toast.show({ message: `Switched to ${entry.id}` });
       dialog.close();
     },
-    [onSelectModel, dialog],
+    [onSelectModel, dialog, toast],
   );
 
   const handleSearchChange = useCallback((value: string) => {

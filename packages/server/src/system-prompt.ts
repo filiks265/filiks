@@ -1,21 +1,17 @@
-import type { Mode } from "@filiks/database/enums";
+import type { ModeType } from "@filiks/shared";
 
 type SystemPromptParams = {
-  cwd: string | null;
-  mode: Mode;
+  mode: ModeType;
 };
 
-export function buildSystemPrompt({ cwd, mode }: SystemPromptParams): string {
+export function buildSystemPrompt({ mode }: SystemPromptParams): string {
   const parts: string[] = [];
 
   parts.push(`You are an expert software engineer working as a coding assistant inside a terminal application.
         The application has two modes the user can switch between:
         - **PLAN** -- Read-only analysis and planning. No file modifications.
         - **BUILD** -- Full implementation with read and write tools`);
-
-  if (cwd) {
-    parts.push(`\nThe user's project directory is: ${cwd}`);
-  }
+  
   if (mode === "PLAN") {
     parts.push(`
                 ## Mode: PLAN

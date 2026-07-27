@@ -4,23 +4,10 @@ import { zValidator } from "@hono/zod-validator";
 import * as Sentry from "@sentry/hono/bun";
 import { z } from "zod";
 import { db } from "@filiks/database/client";
-import { Role, Mode, MessageStatus } from "@filiks/database/enums";
-import { findSupportedChatModel } from "@filiks/shared";
 import type { AuthenticatedEnv } from "../../middleware/require-auth";
 
 const createSessionSchema = z.object({
   title: z.string(),
-  cwd: z.string().optional(),
-  initialMessage: z
-    .object({
-      role: z.enum(Role),
-      content: z.string(),
-      mode: z.enum(Mode),
-      model: z
-        .string()
-        .refine((id) => !!findSupportedChatModel(id), "Unsupported model"),
-    })
-    .optional(),
 });
 
 const createSessionValidator = zValidator(
@@ -42,7 +29,7 @@ const app = new Hono<AuthenticatedEnv>()
 
     const userId = c.get("userId");
     const sessions = await db.session.findMany({
-      where: { UserId:userId },
+      where: { userId:userId },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -69,10 +56,7 @@ const app = new Hono<AuthenticatedEnv>()
     const userId = c.get("userId");
 
     const session = await db.session.findUnique({
-      where: { id, UserId: userId },
-      include: {
-        messages: { orderBy: { createdAt: "asc" } },
-      },
+      where: { id, userId: userId },
     });
 
     if (!session) {
@@ -95,22 +79,14 @@ const app = new Hono<AuthenticatedEnv>()
     // throw new HTTPException(500, {message: "Mock error: session loading failed"})
 
     const userId = c.get("userId");
-    const { initialMessage, ...data } = c.req.valid("json");
+    const { ...data } = c.req.valid("json");
 
     const session = await db.session.create({
       data: {
         ...data,
-        UserId: userId,
-        ...(initialMessage && {
-          messages: {
-            create: {
-              ...initialMessage,
-              status: MessageStatus.COMPLETE,
-            },
-          },
-        }),
+        userId: userId,
+        
       },
-      include: { messages: true },
     });
 
     Sentry.logger.info("Created session", {

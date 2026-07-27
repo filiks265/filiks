@@ -1,15 +1,28 @@
 import type { ReactNode } from "react";
-import { Header } from "../components/header";
+import { useKeyboard } from "@opentui/react";
 import { useTheme } from "../providers/theme";
+import { useKeyboardLayer } from "../providers/keyboard-layer";
+import { useDialog } from "../providers/dialog";
+import { ShortcutHelpContent } from "../components/shortcut-help";
 
 type Props = {
     children: ReactNode;
 };
 
-
-
 export function ThemedRoot({children}: Props) {
   const { colors } = useTheme();
+  const { isTopLayer } = useKeyboardLayer();
+  const dialog = useDialog();
+
+  useKeyboard((key) => {
+    if (!isTopLayer("base")) return;
+    if (key.name === "?" || (key.ctrl && key.name === "/")) {
+      dialog.open({
+        title: "Keyboard Shortcuts",
+        children: <ShortcutHelpContent />,
+      });
+    }
+  });
 
   return (
     <box

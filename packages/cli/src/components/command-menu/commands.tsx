@@ -1,5 +1,6 @@
 import { SUPPORTED_CHAT_MODELS } from "@filiks/shared";
 import {AgentsDialogContent, ModelsDialogContent, SessionsDialogContent, ThemeDialogContent } from "../dialogs";
+import { ConfirmDialog } from "../confirm-dialog";
 import type { Command } from "./types";
 import {performLogin} from "../../lib/oauth";
 import {clearAuth} from "../../lib/auth";
@@ -78,10 +79,19 @@ export const COMMANDS: Command[] = [
     description: "Signout of your account",
     value: "/logout",
     action: (ctx) => {
-      clearAuth();
-      ctx.toast.show({ variant: "success", message: "Signed out..." });
-
-      
+      ctx.dialog.open({
+        title: "Sign out?",
+        children: (
+          <ConfirmDialog
+            message="Are you sure you want to sign out?"
+            confirmLabel="Sign out"
+            onConfirm={() => {
+              clearAuth();
+              ctx.toast.show({ variant: "success", message: "Signed out..." });
+            }}
+          />
+        ),
+      });
     },
   },
   {
@@ -105,7 +115,18 @@ export const COMMANDS: Command[] = [
     description: "Quit the application",
     value: "/exit",
     action: (ctx) => {
-      ctx.exit();
+      ctx.dialog.open({
+        title: "Exit?",
+        children: (
+          <ConfirmDialog
+            message="Are you sure you want to quit?"
+            confirmLabel="Exit"
+            onConfirm={() => {
+              ctx.exit();
+            }}
+          />
+        ),
+      });
     },
   },
 ];

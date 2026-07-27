@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useDialog } from "../../providers/dialog";
+import { useToast } from "../../providers/toast";
 import { useTheme } from "../../providers/theme";
 import { DialogSearchList } from "../dialog-search-list";
 import { THEMES } from "../../theme";
@@ -7,6 +8,7 @@ import type { Theme } from "../../theme";
 
 export const ThemeDialogContent = () => {
   const dialog = useDialog();
+  const toast = useToast();
   const { setTheme, currentTheme, colors } = useTheme();
   // A way to stole the theme when we are changing theses
   const originalThemeRef = useRef(currentTheme);
@@ -25,9 +27,10 @@ export const ThemeDialogContent = () => {
     (theme: Theme) => {
       confirmedRef.current = true;
       setTheme(theme);
+      toast.show({ message: `Switched to ${theme.name}` });
       dialog.close();
     },
-    [setTheme, dialog],
+    [setTheme, dialog, toast],
   );
 
   const handleHighlight = useCallback(

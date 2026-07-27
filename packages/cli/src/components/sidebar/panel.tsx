@@ -22,7 +22,7 @@ export function Panel({ title, defaultOpen = true, children }: Props) {
         focusable
         onMouseDown={() => setOpen((v) => !v)}
         onKeyDown={(key) => {
-          if (key === "enter" || key === "space") setOpen((v) => !v);
+          if (key.name === "enter" || key.name === "space") setOpen((v) => !v);
         }}
       >
         <text>{open ? "▼" : "▶"}</text>

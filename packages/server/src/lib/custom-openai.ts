@@ -259,8 +259,6 @@ export function createCustomOpenAIModel(
           bodyObj.tool_choice = "required";
         } else if (toolChoice?.type === "none") {
           bodyObj.tool_choice = "none";
-        } else {
-          bodyObj.tool_choice = "auto";
         }
       }
 
@@ -323,7 +321,7 @@ export function createCustomOpenAIModel(
 
           try {
             while (true) {
-              let result: ReadableStreamDefaultReadResult<Uint8Array>;
+              let result;
               try {
                 result = await reader.read();
               } catch (err) {
@@ -532,8 +530,6 @@ export function createCustomOpenAIModel(
           bodyObj.tool_choice = "required";
         } else if (toolChoice?.type === "none") {
           bodyObj.tool_choice = "none";
-        } else {
-          bodyObj.tool_choice = "auto";
         }
       }
 
@@ -585,7 +581,7 @@ export function createCustomOpenAIModel(
       );
       const usage = data.usage as Record<string, unknown> | undefined;
 
-      const outputContent: Array<{ type: "text"; text: string } | { type: "tool-call"; toolCallId: string; toolName: string; input: Record<string, unknown> }> = [];
+      const outputContent: Array<{ type: "text"; text: string } | { type: "tool-call"; toolCallId: string; toolName: string; input: string }> = [];
       outputContent.push({ type: "text" as const, text: content });
 
       const rawToolCalls = message.tool_calls as
