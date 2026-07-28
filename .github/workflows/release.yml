@@ -1,0 +1,48 @@
+name: Release
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - target: linux-x64
+            runner: ubuntu-latest
+          - target: darwin-x64
+            runner: macos-13
+          - target: darwin-arm64
+            runner: macos-latest
+          - target: windows-x64
+            runner: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: cd packages/cli && bun install --frozen-lockfile
+      - run: cd packages/cli && bun build --compile ./src/index.tsx --outfile dist/filiks
+      - run: cd packages/cli/dist && tar -czf filiks-${{ matrix.target }}.tar.gz filiks*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: filiks-${{ matrix.target }}
+          path: packages/cli/dist/filiks-${{ matrix.target }}.tar.gz
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: filiks-*
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: filiks-*.tar.gz
+          generate_release_notes: true
