@@ -1,0 +1,10 @@
+#!/usr/bin/env bun
+import dotenv from "dotenv";
+import path from "path";
+
+dotenv.config({
+    path: path.resolve(import.meta.dirname, "../../../.env"),
+    quite: true,
+});
+
+await import("../dist/index.js");

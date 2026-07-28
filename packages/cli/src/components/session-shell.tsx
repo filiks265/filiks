@@ -1,9 +1,11 @@
+import { useEffect, useState, type ReactNode } from "react";
 import { TextAttributes } from "@opentui/core";
-import type { ReactNode } from "react";
 import { InputBar } from "./input-bar";
 import { Spinner } from "./spinner";
 import { Sidebar } from "./sidebar";
 import { usePromptConfig } from "../providers/prompt-config";
+import { useTheme } from "../providers/theme";
+import { getGitInfo, getRelativeCwd } from "../lib/git";
 import type { ClientMessagePart } from "../hooks/use-chat";
 
 type SessionInfo = {
@@ -33,6 +35,18 @@ export function SessionShell({
 }: Props) {
 
   const {mode} = usePromptConfig();
+  const {colors} = useTheme();
+
+  const [gitInfo, setGitInfo] = useState<{ branch: string | null; dirty: boolean }>({ branch: null, dirty: false });
+
+  useEffect(() => {
+    setGitInfo(getGitInfo());
+  }, []);
+
+  const relativeCwd = getRelativeCwd();
+  const gitDisplay = gitInfo.branch
+    ? `${relativeCwd}:${gitInfo.branch}${gitInfo.dirty ? "*" : ""}`
+    : relativeCwd;
 
   return (
     <box
@@ -78,6 +92,11 @@ export function SessionShell({
               <text>tab</text>
               <text attributes={TextAttributes.DIM}>switch mode</text>
             </box>
+          </box>
+          <box flexDirection="row" flexShrink={0} width="100%" height={1} paddingLeft={1}>
+            <text attributes={TextAttributes.DIM} fg={colors.textMuted}>
+              {gitDisplay}
+            </text>
           </box>
         </box>
       </box>

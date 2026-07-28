@@ -4,7 +4,6 @@ import { useKeyboard } from "@opentui/react";
 import { TextAttributes } from "@opentui/core";
 import { useTheme } from "../../providers/theme";
 import { useKeyboardLayer } from "../../providers/keyboard-layer";
-import { useAuth } from "../../hooks/use-auth";
 import { apiClient } from "../../lib/api-client";
 import { SessionInfoPanel } from "./session-info-panel";
 import { ContextsPanel } from "./contexts-panel";
@@ -33,7 +32,6 @@ export function Sidebar({ session, parts, streaming }: Props) {
   const { isTopLayer } = useKeyboardLayer();
   const { colors } = useTheme();
   const navigate = useNavigate();
-  const { user } = useAuth();
 
   const [recentSessions, setRecentSessions] = useState<
     { id: string; title: string; createdAt: string }[]
@@ -83,13 +81,6 @@ export function Sidebar({ session, parts, streaming }: Props) {
         borderColor={colors.dimSeparator}
       >
         <SessionInfoPanel title={session.title} createdAt={session.createdAt} />
-        {user && (
-          <Panel title="Account">
-            <text fg={colors.text}>
-              {user.name ?? user.email ?? user.id}
-            </text>
-          </Panel>
-        )}
         {recentSessions.length > 0 && (
           <Panel title="Recent Sessions" defaultOpen={false}>
             {recentSessions.map((s) => (
@@ -108,7 +99,7 @@ export function Sidebar({ session, parts, streaming }: Props) {
         <MCPPanel />
         <LSPPanel />
       </box>
-      <box flexDirection="column" paddingX={1} paddingTop={1} gap={0}>
+      <box flexDirection="column" paddingX={1} paddingTop={1} paddingBottom={1} gap={0}>
         <text attributes={TextAttributes.DIM} fg={colors.dimSeparator}>
           {session.cwd ?? process.cwd()}
         </text>

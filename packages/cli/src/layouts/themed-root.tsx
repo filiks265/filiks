@@ -16,7 +16,7 @@ export function ThemedRoot({children}: Props) {
 
   useKeyboard((key) => {
     if (!isTopLayer("base")) return;
-    if (key.name === "?" || (key.ctrl && key.name === "/")) {
+    if (key.ctrl && key.name === "/") {
       dialog.open({
         title: "Keyboard Shortcuts",
         children: <ShortcutHelpContent />,
