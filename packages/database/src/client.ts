@@ -8,6 +8,10 @@ dotenv.config({
     path: path.resolve(import.meta.dirname, "../../../.env"),
 });
 
+dotenv.config({
+    path: path.resolve(import.meta.dirname, "../../../.env.local"),
+});
+
 let databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl) {

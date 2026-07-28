@@ -14,6 +14,7 @@ import { useKeyboard, useRenderer } from "@opentui/react";
 import type { KeyBinding } from "@opentui/core";
 import { useNavigate } from "react-router";
 import { EmptyBorder } from "./border";
+import { ShortcutHelpContent } from "./shortcut-help";
 import { StatusBar } from "./status-bar";
 import { CommandMenu } from "./command-menu";
 import type { Command } from "./command-menu/types";
@@ -539,6 +540,16 @@ export function InputBar({ onSubmit, disabled }: Props) {
     if (key.name === "tab") {
       key.preventDefault();
       toggleMode();
+    }
+    if (key.name === "?") {
+      const textarea = textareaRef.current;
+      if (textarea && textarea.plainText.trim().length === 0) {
+        key.preventDefault();
+        dialog.open({
+          title: "Keyboard Shortcuts",
+          children: <ShortcutHelpContent />,
+        });
+      }
     }
   });
 

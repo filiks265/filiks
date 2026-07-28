@@ -17,9 +17,7 @@ export function StatusBar() {
             <text attributes={TextAttributes.DIM} fg={colors.dimSeparator}>›</text>
             <text>{model}</text>
             <text flexGrow={1} />
-            <text attributes={TextAttributes.DIM} fg={colors.textMuted}>
-                {userName ?? "Not signed in"}
-            </text>
+            {userName && <text attributes={TextAttributes.DIM} fg={colors.textMuted}>{userName}</text>}
         </box>
     );
 }
