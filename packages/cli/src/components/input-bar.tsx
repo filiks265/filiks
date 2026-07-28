@@ -543,7 +543,7 @@ export function InputBar({ onSubmit, disabled }: Props) {
     }
     if (key.name === "?") {
       const textarea = textareaRef.current;
-      if (textarea && textarea.plainText.length === 0) {
+      if (textarea && textarea.plainText.trim().length === 0) {
         key.preventDefault();
         dialog.open({
           title: "Keyboard Shortcuts",

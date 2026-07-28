@@ -19,5 +19,8 @@ export function getGitInfo(): { branch: string | null; dirty: boolean } {
 export function getRelativeCwd(): string {
   const cwd = process.cwd();
   const home = homedir();
-  return cwd.startsWith(home) ? `~${cwd.slice(home.length)}` : cwd;
+  if (cwd === home || cwd.startsWith(home + "/")) {
+    return `~${cwd.slice(home.length)}`;
+  }
+  return cwd;
 }

@@ -4,7 +4,7 @@ import path from "path";
 
 dotenv.config({
     path: path.resolve(import.meta.dirname, "../../../.env"),
-    quite: true,
+    quiet: true,
 });
 
 await import("../dist/index.js");
