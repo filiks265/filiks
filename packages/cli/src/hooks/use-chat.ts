@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useChat as useAiChat } from "@ai-sdk/react";
 import {
   DefaultChatTransport,
@@ -68,6 +68,8 @@ export function useChat(sessionId: string, initialMessages: Message[]) {
     });
   }, [sessionId]);
 
+  const apiUrlRef = useRef(apiClient.chat.$url().toString());
+
   const chat = useAiChat({
     id: sessionId,
     messages: initialMessages,
@@ -94,10 +96,21 @@ export function useChat(sessionId: string, initialMessages: Message[]) {
     },
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
   });
+  const error = chat.error
+    ? (chat.error instanceof TypeError
+        ? new Error(
+            `Cannot reach the server at ${apiUrlRef.current}. ` +
+            "Set API_URL in a .env file next to the binary (e.g., API_URL=https://your-server.com).",
+          )
+        : chat.error instanceof Error
+          ? chat.error
+          : new Error(String(chat.error)))
+    : null;
+
   return {
     messages: chat.messages,
     status: chat.status,
-    error: chat.error,
+    error,
     submit: (params: {
       userText: string;
       mode: ModeType;
