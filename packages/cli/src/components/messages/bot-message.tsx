@@ -137,15 +137,9 @@ function CodeBlock({
       )}
       {resolvedLines.map((line, i) => (
         <text key={i}>
-          {line.map((seg, j) =>
-            seg.color ? (
-              <span key={j} fg={seg.color}>
-                {seg.text}
-              </span>
-            ) : (
-              seg.text
-            ),
-          )}
+          {line.map((seg, j) => (
+            <text key={j} fg={seg.color}>{seg.text}</text>
+          ))}
         </text>
       ))}
     </box>
