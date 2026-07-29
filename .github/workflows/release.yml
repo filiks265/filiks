@@ -23,6 +23,7 @@ jobs:
         with:
           bun-version: latest
       - run: cd packages/cli && bun install --frozen-lockfile
+      - run: bun scripts/patch-opentui-reconciler.js
       - run: cd packages/cli && bun build --compile ./src/index.tsx --outfile dist/filiks
         if: matrix.target != 'windows-x64'
       - run: |
