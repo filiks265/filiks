@@ -111,6 +111,14 @@ export const COMMANDS: Command[] = [
     },
   },
   {
+    name: "update",
+    description: "Check for updates",
+    value: "/update",
+    action: (ctx) => {
+      ctx.toast.show({ message: "Run 'filiks update' in your terminal to update." });
+    },
+  },
+  {
     name: "exit",
     description: "Quit the application",
     value: "/exit",

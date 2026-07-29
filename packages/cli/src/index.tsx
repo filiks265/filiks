@@ -5,6 +5,18 @@ import { RootLayout } from "./layouts/root-layout";
 import { Home } from "./screens/home";
 import { NewSession } from "./screens/new-session";
 import { Session } from "./screens/session";
+import { existsSync, unlinkSync } from "fs";
+
+if (process.argv[2] === "update") {
+  const { update } = await import("./lib/update");
+  await update();
+  process.exit(0);
+}
+
+const bakPath = process.execPath + ".bak";
+if (existsSync(bakPath)) {
+  try { unlinkSync(bakPath); } catch {}
+}
 
 
 const router = createMemoryRouter([
