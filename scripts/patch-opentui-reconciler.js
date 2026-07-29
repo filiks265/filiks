@@ -9,69 +9,62 @@ if (!existsSync(bunCacheDir)) {
   process.exit(1);
 }
 
-const entries = readdirSync(bunCacheDir, { withFileTypes: true });
-let targetFile = null;
-
-for (const entry of entries) {
-  if (entry.isDirectory() && entry.name.startsWith("@opentui+react@")) {
-    const pkgDir = join(
-      bunCacheDir,
-      entry.name,
-      "node_modules",
-      "@opentui",
-      "react",
-    );
+function findReconcilerFile() {
+  const entries = readdirSync(bunCacheDir, { withFileTypes: true });
+  for (const entry of entries) {
+    if (!entry.isDirectory() || !entry.name.startsWith("@opentui+react@")) continue;
+    const pkgDir = join(bunCacheDir, entry.name, "node_modules", "@opentui", "react");
     if (!existsSync(pkgDir)) continue;
     for (const file of readdirSync(pkgDir)) {
-      if (file.startsWith("chunk-") && file.endsWith(".js")) {
-        const maybe = join(pkgDir, file);
-        const c = readFileSync(maybe, "utf-8");
-        if (c.includes("Text must be created inside of a text node")) {
-          targetFile = maybe;
-          break;
-        }
-      }
-    }
-    if (targetFile) break;
-  }
-}
-
-if (!targetFile || !existsSync(targetFile)) {
-  console.error("Could not find opentui react chunk file in node_modules/.bun");
-  // Fallback: search node_modules/@opentui/react
-  const fallback = join(rootDir, "node_modules", "@opentui", "react");
-  if (existsSync(fallback)) {
-    for (const file of readdirSync(fallback)) {
-      if (file.startsWith("chunk-") && file.endsWith(".js")) {
-        targetFile = join(fallback, file);
-        break;
-      }
+      if (!file.startsWith("chunk-") || !file.endsWith(".js")) continue;
+      const fp = join(pkgDir, file);
+      const c = readFileSync(fp, "utf-8");
+      if (c.includes("createTextInstance(text, rootContainerInstance, hostContext)")) return fp;
     }
   }
+  return null;
 }
 
+const targetFile = findReconcilerFile();
 if (!targetFile || !existsSync(targetFile)) {
-  console.error("Could not find opentui react chunk file anywhere");
+  console.error("Could not find opentui reconciler chunk file");
   process.exit(1);
 }
 
 const content = readFileSync(targetFile, "utf-8");
+
+if (content.includes("[filiks-patch]")) {
+  console.log("Already patched:", targetFile);
+  process.exit(0);
+}
+
 let patched = content;
 
-patched = patched.replace(
-  `throw new Error("Text must be created inside of a text node")`,
-  `console.warn("[filiks-patch] Bare text outside <text> context:", JSON.stringify(text).slice(0, 200))`,
-);
+const textInstanceBlock = `    if (!hostContext.isInsideText) {
+      throw new Error("Text must be created inside of a text node");
+    }
+    return TextNodeRenderable2.fromString(text);`;
 
-patched = patched.replace(
-  `throw new Error(\`Component of type "\${type}" must be created inside of a text node\`)`,
-  `console.warn(\`[filiks-patch] Component "\${type}" outside <text> context\`)`,
-);
+const textInstanceReplacement = `    if (!hostContext.isInsideText) {
+      console.warn("[filiks-patch] Bare text outside <text> context:", JSON.stringify(text).slice(0, 200));
+    }
+    return TextNodeRenderable2.fromString(text);`;
 
-if (patched === content) {
-  console.error("No patches applied - patterns not found in", targetFile);
+const instanceBlock = `    if (textNodeKeys.includes(type) && !hostContext.isInsideText) {
+      throw new Error(\`Component of type "\${type}" must be created inside of a text node\`);
+    }`;
+
+const instanceReplacement = `    if (textNodeKeys.includes(type) && !hostContext.isInsideText) {
+      console.warn(\`[filiks-patch] Component "\${type}" outside <text> context\`);
+    }`;
+
+const replaced1 = patched.replace(textInstanceBlock, textInstanceReplacement);
+const replaced2 = replaced1.replace(instanceBlock, instanceReplacement);
+
+if (replaced2 === content) {
+  console.error("No patches applied — patterns not found");
   process.exit(1);
 }
 
-writeFileSync(targetFile, patched, "utf-8");
-console.log(`Patched: ${targetFile}`);
+writeFileSync(targetFile, replaced2, "utf-8");
+console.log("Patched:", targetFile);
