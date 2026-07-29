@@ -13,8 +13,6 @@ jobs:
         include:
           - target: linux-x64
             runner: ubuntu-latest
-          - target: darwin-x64
-            runner: macos-13
           - target: darwin-arm64
             runner: macos-latest
           - target: windows-x64
@@ -26,7 +24,7 @@ jobs:
           bun-version: latest
       - run: cd packages/cli && bun install --frozen-lockfile
       - run: cd packages/cli && bun build --compile ./src/index.tsx --outfile dist/filiks
-      - run: cd packages/cli/dist && tar -czf filiks-${{ matrix.target }}.tar.gz filiks*
+      - run: cd packages/cli/dist && tar -czf filiks-${{ matrix.target }}.tar.gz --exclude='*.tar.gz' filiks*
       - uses: actions/upload-artifact@v4
         with:
           name: filiks-${{ matrix.target }}
