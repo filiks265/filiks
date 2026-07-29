@@ -27,9 +27,9 @@ jobs:
         if: matrix.target != 'windows-x64'
       - run: |
           curl.exe -fsSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.14/bun-windows-x64-baseline.zip -o bun-baseline.zip
-          mkdir bun-baseline -Force
-          Expand-Archive -Path bun-baseline.zip -DestinationPath bun-baseline -Force
-          .\bun-baseline\bun.exe build --compile packages/cli/src/index.tsx --outfile packages/cli/dist/filiks
+          tar -xf bun-baseline.zip
+          $bun = Get-ChildItem -Recurse -Filter bun.exe | Select-Object -First 1 -ExpandProperty FullName
+          & $bun build --compile packages/cli/src/index.tsx --outfile packages/cli/dist/filiks
         if: matrix.target == 'windows-x64'
       - run: cd packages/cli/dist && tar -czf filiks-${{ matrix.target }}.tar.gz --exclude='*.tar.gz' filiks*
       - uses: actions/upload-artifact@v4
