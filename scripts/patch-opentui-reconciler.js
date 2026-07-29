@@ -58,13 +58,23 @@ const instanceReplacement = `    if (textNodeKeys.includes(type) && !hostContext
       console.warn(\`[filiks-patch] Component "\${type}" outside <text> context\`);
     }`;
 
+const unknownTypeBlock = `    if (!components[type]) {
+      throw new Error(\`Unknown component type: \${type}\`);
+    }`;
+
+const unknownTypeReplacement = `    if (!components[type]) {
+      console.warn(\`[filiks-patch] Unknown component type: \${type}\`);
+      return new BoxRenderable(rootContainerInstance.ctx, { id, children: [] });
+    }`;
+
 const replaced1 = patched.replace(textInstanceBlock, textInstanceReplacement);
 const replaced2 = replaced1.replace(instanceBlock, instanceReplacement);
+const replaced3 = replaced2.replace(unknownTypeBlock, unknownTypeReplacement);
 
-if (replaced2 === content) {
+if (replaced3 === content) {
   console.error("No patches applied — patterns not found");
   process.exit(1);
 }
 
-writeFileSync(targetFile, replaced2, "utf-8");
+writeFileSync(targetFile, replaced3, "utf-8");
 console.log("Patched:", targetFile);
