@@ -5,6 +5,7 @@ import { RootLayout } from "./layouts/root-layout";
 import { Home } from "./screens/home";
 import { NewSession } from "./screens/new-session";
 import { Session } from "./screens/session";
+import { TextErrorBoundary } from "./components/text-error-boundary";
 import { existsSync, unlinkSync } from "fs";
 
 if (process.argv[2] === "update") {
@@ -40,7 +41,7 @@ const renderer = await createCliRenderer({
   targetFps: 60,
   exitOnCtrlC: false,
 });
-createRoot(renderer).render(<App />);
+createRoot(renderer).render(<TextErrorBoundary><App /></TextErrorBoundary>);
 
 // Set terminal window/tab title
 process.stdout.write("\x1b]0;Filiks\x07");
