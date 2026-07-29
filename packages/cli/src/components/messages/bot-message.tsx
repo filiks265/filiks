@@ -174,7 +174,7 @@ export function BotMessage({
                   paddingX={2}
                 >
                   <text attributes={TextAttributes.DIM} fg={colors.textMuted}>
-                    <em fg={colors.thinking}>Thinking</em> {part.text}
+                    <text fg={colors.thinking} attributes={TextAttributes.DIM}>Thinking</text> {part.text}
                   </text>
                 </box>
               );
@@ -196,7 +196,7 @@ export function BotMessage({
                   flexDirection="column"
                 >
                   <text attributes={TextAttributes.DIM}>
-                    <em fg={colors.info}>{formatToolName(toolName)}:</em>
+                    <text fg={colors.info} attributes={TextAttributes.DIM}>{formatToolName(toolName)}:</text>
                     {formatToolArgs(part)}
                     {part.state !== "output-available" && part.state !== "output-error"
                       ? " ..."
