@@ -10,7 +10,7 @@ function getFetchUrl(input: Parameters<typeof fetch>[0]): string {
 }
 
 export const apiClient = hc<AppType>(
-  process.env.API_URL ?? "http://localhost:3000",
+  process.env.API_URL ?? "https://filiksserver-production.up.railway.app",
   {
     fetch: async (
       input: Parameters<typeof fetch>[0],

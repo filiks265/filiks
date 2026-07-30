@@ -1,25 +1,47 @@
-# Project Readme
+# filiks
 
-Created: 2026-07-30
+Agentic coding CLI with a hosted server backend.
 
-This is a multi-package TypeScript project called **filiks**. It uses Bun as the package manager and has a monorepo structure with packages in the `packages/` directory.
+## Install
 
-## Quick Start
+### Linux / macOS
+```bash
+curl -fsSL https://raw.githubusercontent.com/filiks265/filiks/main/scripts/install.sh | bash
+```
 
-1. Install dependencies
-2. Run `bun run build:cli` to build the CLI
-3. Run `bun run dev:server` for development server
-4. Run `bun run verify` to run all quality checks
+### Windows
+1. Download `filiks-windows-x64.tar.gz` from the [latest release](https://github.com/filiks265/filiks/releases/latest)
+2. Extract `filiks.exe` and place it in a directory in your `PATH`
+3. Create a `.env` file next to `filiks.exe` with:
+   ```env
+   API_URL=https://filiksserver-production.up.railway.app
+   ```
+
+### Manual
+```bash
+# Download the archive for your platform
+curl -fsSL https://github.com/filiks265/filiks/releases/download/v0.2.12/filiks-linux-x64.tar.gz | sudo tar xz -C /usr/local/bin
+# Make sure /usr/local/bin is in your PATH
+```
+
+## Quick Start (development)
+
+```bash
+bun install
+bun run dev:server   # start the server
+bun run dev:cli      # start the CLI (another terminal)
+```
 
 ## Scripts
 
-- `dev:cli` - Watch CLI for changes
-- `dev:server` - Hot-reload server
-- `build:cli` - Build CLI package
-- `build:binary` - Build CLI as binary
-- `link:cli` - Build and link CLI package
-- `release` - Build binary and create GitHub release
-- `typecheck` - Run TypeScript checks
-- `test` - Run tests
-- `lint` - Run Biome linter
-- `verify` - Run full quality pipeline
+| Script | Description |
+|--------|-------------|
+| `dev:cli` | Watch CLI for changes |
+| `dev:server` | Hot-reload server |
+| `build:cli` | Build CLI package |
+| `build:binary` | Build CLI as standalone binary |
+| `release` | Build binary and create GitHub release |
+| `typecheck` | Run TypeScript checks across all packages |
+| `test` | Run tests |
+| `lint` | Run Biome linter |
+| `verify` | Run full quality pipeline |
