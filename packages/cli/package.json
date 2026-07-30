@@ -17,6 +17,7 @@
     "@filiks/shared": "workspace:*",
     "@opentui/core": "^0.4.1",
     "@opentui/core-linux-x64": "^0.4.1",
+    "@opentui/core-win32-x64": "^0.4.1",
     "@opentui/react": "^0.4.1",
     "ai": "^7.0.37",
     "date-fns": "^4.4.0",
