@@ -1,22 +1,22 @@
-import dotenv from "dotenv";
-import path from "path";
+import path from "node:path";
 import { anthropic } from "@ai-sdk/anthropic";
-import { openai } from "@ai-sdk/openai";
+import { deepseek } from "@ai-sdk/deepseek";
 import { google } from "@ai-sdk/google";
 import { groq } from "@ai-sdk/groq";
-import { deepseek } from "@ai-sdk/deepseek";
 import { mistral } from "@ai-sdk/mistral";
-import { openrouter } from "./openrouter";
-import { createCustomOpenAIModel } from "./custom-openai";
-import { providers as snapshotProviders } from "@opencode-ai/models/snapshot";
-import type { ProviderMap } from "@opencode-ai/models";
+import { openai } from "@ai-sdk/openai";
 import {
-  findSupportedChatModel,
   type SupportedChatModel,
   type SupportedChatModelId,
   type SupportedProvider,
+  findSupportedChatModel,
 } from "@filiks/shared";
+import type { ProviderMap } from "@opencode-ai/models";
+import { providers as snapshotProviders } from "@opencode-ai/models/snapshot";
 import type { LanguageModel } from "ai";
+import dotenv from "dotenv";
+import { createCustomOpenAIModel } from "./custom-openai";
+import { openrouter } from "./openrouter";
 
 dotenv.config({
   path: path.resolve(import.meta.dirname, "../../../../.env"),
@@ -69,7 +69,7 @@ const PROVIDER_OPTIONS: Record<string, ProviderOptions | undefined> = {
 
 // Compatibility: old env var names that can satisfy a canonical models.dev env requirement
 const ENV_FALLBACKS: Record<string, string[]> = {
-  "OPENCODE_API_KEY": ["OPENCODE_ZEN_API_KEY"],
+  OPENCODE_API_KEY: ["OPENCODE_ZEN_API_KEY"],
 };
 
 // Check canonical and fallback env var names
@@ -102,7 +102,8 @@ const npmResolvers: Record<string, ModelResolver> = {
   "@ai-sdk/mistral": (id) => mistral(id),
   "@ai-sdk/openai-compatible": (id, api) => {
     const providerInfo = findProviderForModel(id);
-    if (!providerInfo) throw new Error(`Cannot resolve provider for model: ${id}`);
+    if (!providerInfo)
+      throw new Error(`Cannot resolve provider for model: ${id}`);
     const apiKey = getApiKey(providerInfo.env);
     return createCustomOpenAIModel(id, {
       baseURL: api || providerInfo.api || "",
@@ -120,7 +121,7 @@ function getApiKey(env: string[]): string {
     const val = resolveEnvVar(e);
     if (val) return val;
   }
-  console.warn(`[models] no API key found among: ${env.join(', ')}`);
+  console.warn(`[models] no API key found among: ${env.join(", ")}`);
   return "";
 }
 

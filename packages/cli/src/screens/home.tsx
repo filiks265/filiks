@@ -1,8 +1,8 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router";
 import { Header } from "../components/header";
-import { InputBar } from "../components/input-bar";
 import { HomeStatusBar } from "../components/home-status-bar";
+import { InputBar } from "../components/input-bar";
 import { usePromptConfig } from "../providers/prompt-config";
 
 export function Home() {
@@ -31,4 +31,4 @@ export function Home() {
       </box>
     </box>
   );
-};
+}

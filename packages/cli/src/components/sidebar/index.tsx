@@ -1,17 +1,17 @@
-import { useState, useCallback, useEffect } from "react";
-import { useNavigate } from "react-router";
-import { useKeyboard } from "@opentui/react";
 import { TextAttributes } from "@opentui/core";
-import { useTheme } from "../../providers/theme";
-import { useKeyboardLayer } from "../../providers/keyboard-layer";
-import { apiClient } from "../../lib/api-client";
-import { SessionInfoPanel } from "./session-info-panel";
-import { ContextsPanel } from "./contexts-panel";
-import { TodoPanel } from "./todo-panel";
-import { MCPPanel } from "./mcp-panel";
-import { LSPPanel } from "./lsp-panel";
-import { Panel } from "./panel";
+import { useKeyboard } from "@opentui/react";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import type { ClientMessagePart } from "../../hooks/use-chat";
+import { apiClient } from "../../lib/api-client";
+import { useKeyboardLayer } from "../../providers/keyboard-layer";
+import { useTheme } from "../../providers/theme";
+import { ContextsPanel } from "./contexts-panel";
+import { LSPPanel } from "./lsp-panel";
+import { MCPPanel } from "./mcp-panel";
+import { Panel } from "./panel";
+import { SessionInfoPanel } from "./session-info-panel";
+import { TodoPanel } from "./todo-panel";
 
 type SessionInfo = {
   title: string;
@@ -69,7 +69,12 @@ export function Sidebar({ session, parts, streaming }: Props) {
   if (!visible) return null;
 
   return (
-    <box flexDirection="column" flexShrink={0} width={SIDEBAR_WIDTH} height="100%">
+    <box
+      flexDirection="column"
+      flexShrink={0}
+      width={SIDEBAR_WIDTH}
+      height="100%"
+    >
       <box
         width="100%"
         flexGrow={1}
@@ -89,7 +94,7 @@ export function Sidebar({ session, parts, streaming }: Props) {
                 fg={colors.textMuted}
                 onMouseDown={() => navigate(`/sessions/${s.id}`)}
               >
-                {s.title.length > 30 ? s.title.slice(0, 30) + "…" : s.title}
+                {s.title.length > 30 ? `${s.title.slice(0, 30)}…` : s.title}
               </text>
             ))}
           </Panel>
@@ -99,7 +104,13 @@ export function Sidebar({ session, parts, streaming }: Props) {
         <MCPPanel />
         <LSPPanel />
       </box>
-      <box flexDirection="column" paddingX={1} paddingTop={1} paddingBottom={1} gap={0}>
+      <box
+        flexDirection="column"
+        paddingX={1}
+        paddingTop={1}
+        paddingBottom={1}
+        gap={0}
+      >
         <text attributes={TextAttributes.DIM} fg={colors.dimSeparator}>
           {session.cwd ?? process.cwd()}
         </text>

@@ -18,16 +18,14 @@ export async function authenticateOauthRequest(request: Request) {
     acceptsToken: "oauth_token",
   });
 
-  if (!requestState.isAuthenticated){
+  if (!requestState.isAuthenticated) {
     return null;
   }
 
   const auth = requestState.toAuth();
   if (auth.tokenType !== "oauth_token" || !auth.userId) {
-      return null;
+    return null;
   }
 
-  return {userId: auth.userId};
-};
-
-
+  return { userId: auth.userId };
+}

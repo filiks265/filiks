@@ -25,7 +25,11 @@ const BUILT_IN_PROFILES: AgentProfile[] = [
 You may create, modify, or delete files as needed to complete the task.
 Always verify your changes when possible.`,
     commands: [
-      { name: "plan", description: "Switch to read-only analysis mode", value: "/plan" },
+      {
+        name: "plan",
+        description: "Switch to read-only analysis mode",
+        value: "/plan",
+      },
     ],
   },
   {
@@ -37,7 +41,11 @@ Always verify your changes when possible.`,
 You must NOT create, modify, or delete any files.
 Focus on analysis, research, and proposing solutions.`,
     commands: [
-      { name: "build", description: "Switch to implementation mode", value: "/build" },
+      {
+        name: "build",
+        description: "Switch to implementation mode",
+        value: "/build",
+      },
     ],
   },
 ];
@@ -68,15 +76,20 @@ export function buildProfileSystemPrompt(profile: AgentProfile): string {
   return profile.systemPromptSuffix ?? "";
 }
 
-export async function loadProfileFromFile(cwd: string): Promise<AgentProfile | null> {
+export async function loadProfileFromFile(
+  cwd: string,
+): Promise<AgentProfile | null> {
   try {
-    const { readFile, existsSync } = await import("fs");
-    const { join } = await import("path");
+    const { readFile, existsSync } = await import("node:fs");
+    const { join } = await import("node:path");
     const yamlPath = join(cwd, ".filiks", "profile.yaml");
 
     if (!existsSync(yamlPath)) return null;
 
-    const content = (await import("fs/promises")).readFile(yamlPath, "utf8");
+    const content = (await import("node:fs/promises")).readFile(
+      yamlPath,
+      "utf8",
+    );
     const text = await content;
     const parsed = parseSimpleYaml(text) as Record<string, unknown>;
 
@@ -89,7 +102,11 @@ export async function loadProfileFromFile(cwd: string): Promise<AgentProfile | n
       mode: parsed.mode as ModeType,
       systemPromptSuffix: parsed.instructions as string | undefined,
       commands: parsed.commands
-        ? (parsed.commands as Array<{ name: string; description: string; value: string }>)
+        ? (parsed.commands as Array<{
+            name: string;
+            description: string;
+            value: string;
+          }>)
         : undefined,
     };
 

@@ -1,9 +1,9 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useCallback, useContext, useState } from "react";
 import type { ReactNode } from "react";
-import type { ThemeColors, Theme } from "../../theme";
+import type { Theme, ThemeColors } from "../../theme";
 import { DEFAULT_THEME, THEMES } from "../../theme";
 
 const CONFIG_DIR = join(homedir(), ".filiks");
@@ -25,7 +25,7 @@ function getInitialTheme(): Theme {
   } catch {
     return DEFAULT_THEME;
   }
-};
+}
 
 function persistTheme(theme: Theme) {
   try {

@@ -3,7 +3,20 @@ import { useTheme } from "../../providers/theme";
 import { Panel } from "./panel";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 
 type Props = {
   title: string;
@@ -17,7 +30,7 @@ function formatTimestamp(iso: string): string {
 }
 
 function truncate(text: string, max: number): string {
-  return text.length > max ? text.slice(0, max - 3) + "..." : text;
+  return text.length > max ? `${text.slice(0, max - 3)}...` : text;
 }
 
 export function SessionInfoPanel({ title, createdAt }: Props) {

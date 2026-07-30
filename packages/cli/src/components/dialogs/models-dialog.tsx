@@ -1,9 +1,9 @@
+import type { SupportedChatModel, SupportedChatModelId } from "@filiks/shared";
+import { TextAttributes } from "@opentui/core";
 import { useCallback, useMemo, useState } from "react";
 import { useDialog } from "../../providers/dialog";
 import { useToast } from "../../providers/toast";
 import { DialogSearchList } from "../dialog-search-list";
-import { TextAttributes } from "@opentui/core";
-import type { SupportedChatModel, SupportedChatModelId } from "@filiks/shared";
 
 type ListEntry =
   | { kind: "header"; section: string; label: string }
@@ -22,7 +22,10 @@ function buildGroupedList(
     ? models.filter((m) => m.id.toLowerCase().includes(query.toLowerCase()))
     : models;
 
-  const groups = new Map<string, { name: string; models: SupportedChatModel[] }>();
+  const groups = new Map<
+    string,
+    { name: string; models: SupportedChatModel[] }
+  >();
   for (const m of filtered) {
     let group = groups.get(m.provider);
     if (!group) {
@@ -92,9 +95,7 @@ export const ModelsDialogContent = ({
       filterFn={(_entry, _query) => true}
       renderItem={(entry, isSelected) => {
         if (entry.kind === "header") {
-          return (
-            <text attributes={TextAttributes.DIM}>{entry.label}</text>
-          );
+          return <text attributes={TextAttributes.DIM}>{entry.label}</text>;
         }
         return (
           <text selectable={false} fg={isSelected ? "black" : "white"}>

@@ -1,7 +1,7 @@
-import { mkdir, readFile, readdir, stat, writeFile } from "fs/promises";
-import { dirname, isAbsolute, join, relative, resolve } from "path";
+import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { toolInputSchemas } from "@filiks/shared";
-import type { ToolResult, ToolAdapter } from "./tool-runtime";
+import type { ToolAdapter, ToolResult } from "./tool-runtime";
 
 const MAX_FILE_SIZE = 10_000;
 const MAX_RESULTS = 200;
@@ -38,7 +38,8 @@ function tryParseJsonObject(input: string): unknown {
 export class LocalToolAdapter implements ToolAdapter {
   async execute(toolName: string, input: unknown): Promise<ToolResult> {
     try {
-      const parsedInput = typeof input === "string" ? tryParseJsonObject(input) : input;
+      const parsedInput =
+        typeof input === "string" ? tryParseJsonObject(input) : input;
 
       switch (toolName) {
         case "readFile":
@@ -171,7 +172,10 @@ export class LocalToolAdapter implements ToolAdapter {
       return { success: false, error: `grep failed: ${stderr.trim()}` };
     }
     if (!stdout.trim()) {
-      return { success: true, data: { matches: [], message: "No matches found" } };
+      return {
+        success: true,
+        data: { matches: [], message: "No matches found" },
+      };
     }
 
     const lines = stdout.trim().split("\n");
@@ -218,7 +222,8 @@ export class LocalToolAdapter implements ToolAdapter {
   }
 
   private async editFile(input: unknown): Promise<ToolResult> {
-    const { path, oldString, newString } = toolInputSchemas.editFile.parse(input);
+    const { path, oldString, newString } =
+      toolInputSchemas.editFile.parse(input);
     const { cwd, resolved } = resolveInsideCwd(path);
     const content = await readFile(resolved, "utf8");
     const occurrences = content.split(oldString).length - 1;
@@ -241,7 +246,8 @@ export class LocalToolAdapter implements ToolAdapter {
   }
 
   private async bash(input: unknown): Promise<ToolResult> {
-    const { command, timeout = DEFAULT_TIMEOUT } = toolInputSchemas.bash.parse(input);
+    const { command, timeout = DEFAULT_TIMEOUT } =
+      toolInputSchemas.bash.parse(input);
     const proc = Bun.spawn(["bash", "-c", command], {
       cwd: resolveInsideCwd(".").resolved,
       stdout: "pipe",

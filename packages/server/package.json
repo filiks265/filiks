@@ -1,37 +1,37 @@
 {
-    "name": "@filiks/server",
-    "type": "module",
-    "private": true,
-    "exports": {
-        ".": "./src/index.ts"
-    },
-    "scripts": {
-        "dev": "bun run --hot src/index.ts",
-        "build": "bun build src/index.ts --outdir dist --target bun",
-        "postinstall": "bun x prisma generate --schema=../database/prisma/schema.prisma"
-    },
-    "dependencies": {
-        "@ai-sdk/anthropic": "^4.0.6",
-        "@ai-sdk/deepseek": "^3.0.11",
-        "@ai-sdk/google": "^4.0.17",
-        "@ai-sdk/groq": "^4.0.11",
-        "@ai-sdk/mistral": "^4.0.12",
-        "@ai-sdk/openai": "^4.0.6",
-        "@ai-sdk/provider-utils": "^5.0.10",
-        "@clerk/backend": "^3.12.0",
-        "@filiks/database": "workspace:*",
-        "@filiks/shared": "workspace:*",
-        "@hono/zod-validator": "^0.8.0",
-        "@opencode-ai/models": "0.0.19",
-        "@sentry/bun": "^10.63.0",
-        "@sentry/hono": "^10.63.0",
-        "ai": "^7.0.13",
-        "dotenv": "^17.4.2",
-        "hono": "^4.12.27",
-        "zod": "^4.4.3"
-    },
-    "devDependencies": {
-        "@ai-sdk/provider": "^4.0.3",
-        "@types/bun": "^1.3.14"
-    }
+  "name": "@filiks/server",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "build": "bun build src/index.ts --outdir dist --target bun",
+    "postinstall": "bun x prisma generate --schema=../database/prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.6",
+    "@ai-sdk/deepseek": "^3.0.11",
+    "@ai-sdk/google": "^4.0.17",
+    "@ai-sdk/groq": "^4.0.11",
+    "@ai-sdk/mistral": "^4.0.12",
+    "@ai-sdk/openai": "^4.0.6",
+    "@ai-sdk/provider-utils": "^5.0.10",
+    "@clerk/backend": "^3.12.0",
+    "@filiks/database": "workspace:*",
+    "@filiks/shared": "workspace:*",
+    "@hono/zod-validator": "^0.8.0",
+    "@opencode-ai/models": "0.0.19",
+    "@sentry/bun": "^10.63.0",
+    "@sentry/hono": "^10.63.0",
+    "ai": "^7.0.13",
+    "dotenv": "^17.4.2",
+    "hono": "^4.12.27",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@ai-sdk/provider": "^4.0.3",
+    "@types/bun": "^1.3.14"
+  }
 }

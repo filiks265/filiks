@@ -1,16 +1,16 @@
 {
-    "name": "@filiks/shared",
-    "type": "module",
-    "private": true,
-    "exports": {
-        ".": "./src/index.ts"
-    },
-    "dependencies": {
-        "@opencode-ai/models": "0.0.19",
-        "ai": "^7.0.37",
-        "zod": "^4.4.3"
-    },
-    "devDependencies": {
-        "@types/bun": "^1.3.14"
-    }
+  "name": "@filiks/shared",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@opencode-ai/models": "0.0.19",
+    "ai": "^7.0.37",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14"
+  }
 }

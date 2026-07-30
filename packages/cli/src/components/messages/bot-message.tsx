@@ -1,12 +1,15 @@
-import prettyMs from "pretty-ms";
-import { EmptyBorder } from "../border";
-import { useTheme } from "../../providers/theme";
-import type { Message } from "../../hooks/use-chat";
 import { Mode, type ModeType } from "@filiks/shared";
 import { TextAttributes } from "@opentui/core";
+import prettyMs from "pretty-ms";
+import type { Message } from "../../hooks/use-chat";
+import { useTheme } from "../../providers/theme";
+import { EmptyBorder } from "../border";
 
 type ClientMessagePart = Message["parts"][number];
-type ToolPart = Extract<ClientMessagePart, { type: `tool-${string}` | "dynamic-tool" }>;
+type ToolPart = Extract<
+  ClientMessagePart,
+  { type: `tool-${string}` | "dynamic-tool" }
+>;
 
 type Props = {
   parts: ClientMessagePart[];
@@ -20,11 +23,11 @@ function formatToolName(name: string): string {
   return name
     .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
     .replace(/^./, (c) => c.toUpperCase());
-};
+}
 
 function isToolPart(part: ClientMessagePart): part is ToolPart {
   return part.type === "dynamic-tool" || part.type.startsWith("tool-");
-};
+}
 
 function formatToolArgs(tc: ToolPart): string {
   if (!("input" in tc) || tc.input == null) return "";
@@ -45,17 +48,18 @@ function groupConsecutiveParts(parts: ClientMessagePart[]): PartGroup[] {
     const part = parts[i]!;
     const lastGroup = groups[groups.length - 1];
 
-     if (lastGroup && lastGroup.type === part.type) {
+    if (lastGroup && lastGroup.type === part.type) {
       lastGroup.parts.push(part);
-     } else {
-      const key =
-        isToolPart(part) ? `group-tc-${part.toolCallId}` : `group-${part.type}-${i}`;
+    } else {
+      const key = isToolPart(part)
+        ? `group-tc-${part.toolCallId}`
+        : `group-${part.type}-${i}`;
       groups.push({ type: part.type, parts: [part], key });
-     }
+    }
   }
 
   return groups;
-};
+}
 
 export function BotMessage({
   parts,
@@ -84,7 +88,8 @@ export function BotMessage({
                   paddingX={2}
                 >
                   <text attributes={TextAttributes.DIM}>
-                    {"Thinking: "}{part.text}
+                    {"Thinking: "}
+                    {part.text}
                   </text>
                 </box>
               );
@@ -92,7 +97,9 @@ export function BotMessage({
 
             if (isToolPart(part)) {
               const toolName =
-                part.type === "dynamic-tool" ? part.toolName : part.type.slice("tool-".length);
+                part.type === "dynamic-tool"
+                  ? part.toolName
+                  : part.type.slice("tool-".length);
 
               return (
                 <box
@@ -110,7 +117,8 @@ export function BotMessage({
                     {formatToolName(toolName)}
                     {": "}
                     {formatToolArgs(part)}
-                    {part.state !== "output-available" && part.state !== "output-error"
+                    {part.state !== "output-available" &&
+                    part.state !== "output-error"
                       ? " …"
                       : ""}
                     {part.state === "output-error" ? ` ${part.errorText}` : ""}
@@ -134,11 +142,11 @@ export function BotMessage({
 
       <box paddingX={3} paddingY={1} gap={1} width="100%">
         <box flexDirection="row" gap={2}>
-          <text fg={mode === Mode.PLAN ? colors.planMode : colors.primary}>◉</text>
+          <text fg={mode === Mode.PLAN ? colors.planMode : colors.primary}>
+            ◉
+          </text>
           <box flexDirection="row" gap={1}>
-            <text>
-              {mode === Mode.PLAN ? "Plan" : "Build"}
-            </text>
+            <text>{mode === Mode.PLAN ? "Plan" : "Build"}</text>
             <text attributes={TextAttributes.DIM} fg={colors.dimSeparator}>
               {"›"}
             </text>
@@ -158,4 +166,4 @@ export function BotMessage({
       </box>
     </box>
   );
-};
+}

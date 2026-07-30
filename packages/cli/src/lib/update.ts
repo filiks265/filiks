@@ -1,16 +1,16 @@
-import { platform, arch, tmpdir } from "os";
-import { join, basename } from "path";
+import { execSync } from "node:child_process";
 import {
+  chmodSync,
   existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
   renameSync,
   unlinkSync,
-  chmodSync,
   writeFileSync,
-  readFileSync,
-  mkdirSync,
-  readdirSync,
-} from "fs";
-import { execSync } from "child_process";
+} from "node:fs";
+import { arch, platform, tmpdir } from "node:os";
+import { basename, join } from "node:path";
 import { VERSION } from "./version";
 
 const REPO = "filiks265/filiks";
@@ -22,8 +22,7 @@ function getTarget(): string {
   if (p === "darwin" && a === "arm64") return "darwin-arm64";
   if (p === "win32" && a === "x64") return "windows-x64";
   throw new Error(
-    `Unsupported platform: ${p} ${a}. ` +
-      `filiks builds are available for linux-x64, darwin-arm64, and windows-x64.`,
+    `Unsupported platform: ${p} ${a}. filiks builds are available for linux-x64, darwin-arm64, and windows-x64.`,
   );
 }
 
@@ -48,7 +47,7 @@ export async function update() {
   const binaryName = isWin ? "filiks.exe" : "filiks";
 
   console.log(`\n  Current version: ${VERSION}`);
-  console.log(`  Checking for updates...`);
+  console.log("  Checking for updates...");
 
   const res = await fetch(
     `https://api.github.com/repos/${REPO}/releases/latest`,
@@ -88,9 +87,9 @@ export async function update() {
 
   const newBinaryPath = findFile(extractDir, binaryName);
   if (!newBinaryPath || !existsSync(newBinaryPath))
-    throw new Error(`Extracted binary not found inside tarball.`);
+    throw new Error("Extracted binary not found inside tarball.");
 
-  const backupPath = binaryPath + ".bak";
+  const backupPath = `${binaryPath}.bak`;
   if (existsSync(backupPath)) {
     try {
       unlinkSync(backupPath);
@@ -123,6 +122,8 @@ export async function update() {
 
   console.log(`  Updated to ${tag}!`);
   if (isWin)
-    console.log(`  Backup saved as ${basename(backupPath)} (deleted next startup).`);
-  console.log(`  Restart filiks to use the new version.`);
+    console.log(
+      `  Backup saved as ${basename(backupPath)} (deleted next startup).`,
+    );
+  console.log("  Restart filiks to use the new version.");
 }

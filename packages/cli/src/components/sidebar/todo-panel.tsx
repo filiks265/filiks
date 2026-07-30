@@ -1,9 +1,9 @@
 import { TextAttributes } from "@opentui/core";
-import { useTheme } from "../../providers/theme";
-import { usePromptConfig } from "../../providers/prompt-config";
-import { Panel } from "./panel";
-import { isToolUIPart, getToolName } from "ai";
+import { getToolName, isToolUIPart } from "ai";
 import type { ClientMessagePart } from "../../hooks/use-chat";
+import { usePromptConfig } from "../../providers/prompt-config";
+import { useTheme } from "../../providers/theme";
+import { Panel } from "./panel";
 
 type Props = {
   parts: ClientMessagePart[];
@@ -27,11 +27,15 @@ export function TodoPanel({ parts, streaming }: Props) {
       )}
       {toolCalls.map((tc) => (
         <box key={tc.toolCallId} flexDirection="row" gap={1}>
-          <text fg={tc.state === "output-available" ? colors.success : colors.info}>
+          <text
+            fg={tc.state === "output-available" ? colors.success : colors.info}
+          >
             {tc.state === "output-available" ? "✓" : "○"}
           </text>
           <text
-            fg={tc.state === "output-available" ? colors.textMuted : colors.text}
+            fg={
+              tc.state === "output-available" ? colors.textMuted : colors.text
+            }
           >
             {getToolName(tc)}
           </text>

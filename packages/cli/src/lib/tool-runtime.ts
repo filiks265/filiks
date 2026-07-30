@@ -1,4 +1,4 @@
-import { type ModeType } from "@filiks/shared";
+import type { ModeType } from "@filiks/shared";
 
 export type ToolResult = {
   success: boolean;
@@ -14,7 +14,11 @@ export type PermissionDecision = {
 };
 
 export interface PermissionPolicy {
-  check(toolName: string, input: unknown, mode: ModeType): Promise<PermissionDecision>;
+  check(
+    toolName: string,
+    input: unknown,
+    mode: ModeType,
+  ): Promise<PermissionDecision>;
 }
 
 export interface ToolAdapter {
@@ -40,14 +44,20 @@ export class ToolRuntime {
     this.policy = policy;
   }
 
-  async execute(toolName: string, input: unknown, mode: ModeType): Promise<ToolResult> {
+  async execute(
+    toolName: string,
+    input: unknown,
+    mode: ModeType,
+  ): Promise<ToolResult> {
     const start = Date.now();
 
     const permission = await this.policy.check(toolName, input, mode);
     if (!permission.allowed) {
       const result: ToolResult = {
         success: false,
-        error: permission.reason ?? `Tool ${toolName} is not allowed in ${mode} mode`,
+        error:
+          permission.reason ??
+          `Tool ${toolName} is not allowed in ${mode} mode`,
       };
       this.record({ toolName, input, result, durationMs: Date.now() - start });
       return result;
@@ -88,15 +98,16 @@ export class ModePermissionPolicy implements PermissionPolicy {
   private allowedInPlan: Set<string>;
 
   constructor(allowedInPlan?: string[]) {
-    this.allowedInPlan = new Set(allowedInPlan ?? [
-      "readFile",
-      "listDirectory",
-      "glob",
-      "grep",
-    ]);
+    this.allowedInPlan = new Set(
+      allowedInPlan ?? ["readFile", "listDirectory", "glob", "grep"],
+    );
   }
 
-  async check(toolName: string, _input: unknown, mode: ModeType): Promise<PermissionDecision> {
+  async check(
+    toolName: string,
+    _input: unknown,
+    mode: ModeType,
+  ): Promise<PermissionDecision> {
     if (mode === "PLAN" && !this.allowedInPlan.has(toolName)) {
       return {
         allowed: false,

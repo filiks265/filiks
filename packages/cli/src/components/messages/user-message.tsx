@@ -1,6 +1,6 @@
+import { Mode, type ModeType } from "@filiks/shared";
 import { useTheme } from "../../providers/theme";
 import { EmptyBorder } from "../border";
-import { Mode, type ModeType } from "@filiks/shared";
 
 type Props = {
   message: string;

@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useRef } from "react";
-import { z } from "zod";
 import { Mode, modeSchema } from "@filiks/shared";
-import { useNavigate, useLocation } from "react-router";
-import { SessionShell } from "../components/session-shell";
+import { useEffect, useMemo, useRef } from "react";
+import { useLocation, useNavigate } from "react-router";
+import { z } from "zod";
 import { UserMessage } from "../components/messages";
-import { useToast } from "../providers/toast";
+import { SessionShell } from "../components/session-shell";
 import { apiClient } from "../lib/api-client";
 import { getErrorMessage } from "../lib/http-errors";
+import { useToast } from "../providers/toast";
 
 const newSessionStateSchema = z.object({
   message: z.string(),
@@ -87,4 +87,4 @@ export function NewSession() {
       <UserMessage message={state.message} mode={state.mode} />
     </SessionShell>
   );
-};
+}

@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useDialog } from "../../providers/dialog";
-import { useToast } from "../../providers/toast";
 import { useTheme } from "../../providers/theme";
-import { DialogSearchList } from "../dialog-search-list";
+import { useToast } from "../../providers/toast";
 import { THEMES } from "../../theme";
 import type { Theme } from "../../theme";
+import { DialogSearchList } from "../dialog-search-list";
 
 export const ThemeDialogContent = () => {
   const dialog = useDialog();
@@ -49,11 +49,12 @@ export const ThemeDialogContent = () => {
         t.name.toLowerCase().includes(query.toLowerCase())
       }
       renderItem={(theme, isSelected) => (
-        <text selectable={false} fg={isSelected ? colors.textOnSelection : colors.text}>
-          {theme.name === originalThemeRef.current.name
-            ? "\u2022 "
-            : ""}
-            {theme.name}
+        <text
+          selectable={false}
+          fg={isSelected ? colors.textOnSelection : colors.text}
+        >
+          {theme.name === originalThemeRef.current.name ? "\u2022 " : ""}
+          {theme.name}
         </text>
       )}
       getKey={(t) => t.name}

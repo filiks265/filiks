@@ -1,15 +1,15 @@
-import dotenv from "dotenv";
-import path from "path";
 import dns from "node:dns";
+import path from "node:path";
 import { PrismaPg } from "@prisma/adapter-pg";
+import dotenv from "dotenv";
 import { PrismaClient } from "../generated/prisma/client.ts";
 
 dotenv.config({
-    path: path.resolve(import.meta.dirname, "../../../.env"),
+  path: path.resolve(import.meta.dirname, "../../../.env"),
 });
 
 dotenv.config({
-    path: path.resolve(import.meta.dirname, "../../../.env.local"),
+  path: path.resolve(import.meta.dirname, "../../../.env.local"),
 });
 
 let databaseUrl = process.env.DATABASE_URL;

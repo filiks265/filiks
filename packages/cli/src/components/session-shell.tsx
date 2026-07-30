@@ -1,12 +1,12 @@
-import { useEffect, useState, type ReactNode } from "react";
 import { TextAttributes } from "@opentui/core";
-import { InputBar } from "./input-bar";
-import { Spinner } from "./spinner";
-import { Sidebar } from "./sidebar";
+import { type ReactNode, useEffect, useState } from "react";
+import type { ClientMessagePart } from "../hooks/use-chat";
+import { getGitInfo, getRelativeCwd } from "../lib/git";
 import { usePromptConfig } from "../providers/prompt-config";
 import { useTheme } from "../providers/theme";
-import { getGitInfo, getRelativeCwd } from "../lib/git";
-import type { ClientMessagePart } from "../hooks/use-chat";
+import { InputBar } from "./input-bar";
+import { Sidebar } from "./sidebar";
+import { Spinner } from "./spinner";
 
 type SessionInfo = {
   title: string;
@@ -33,11 +33,13 @@ export function SessionShell({
   parts = [],
   session,
 }: Props) {
+  const { mode } = usePromptConfig();
+  const { colors } = useTheme();
 
-  const {mode} = usePromptConfig();
-  const {colors} = useTheme();
-
-  const [gitInfo, setGitInfo] = useState<{ branch: string | null; dirty: boolean }>({ branch: null, dirty: false });
+  const [gitInfo, setGitInfo] = useState<{
+    branch: string | null;
+    dirty: boolean;
+  }>({ branch: null, dirty: false });
 
   useEffect(() => {
     setGitInfo(getGitInfo());
@@ -49,12 +51,7 @@ export function SessionShell({
     : relativeCwd;
 
   return (
-    <box
-      flexDirection="row"
-      flexGrow={1}
-      width="100%"
-      height="100%"
-    >
+    <box flexDirection="row" flexGrow={1} width="100%" height="100%">
       <box
         flexDirection="column"
         flexGrow={1}
@@ -93,14 +90,22 @@ export function SessionShell({
               <text attributes={TextAttributes.DIM}>switch mode</text>
             </box>
           </box>
-          <box flexDirection="row" flexShrink={0} width="100%" height={1} paddingLeft={1}>
+          <box
+            flexDirection="row"
+            flexShrink={0}
+            width="100%"
+            height={1}
+            paddingLeft={1}
+          >
             <text attributes={TextAttributes.DIM} fg={colors.textMuted}>
               {gitDisplay}
             </text>
           </box>
         </box>
       </box>
-      {session && <Sidebar session={session} parts={parts} streaming={loading} />}
+      {session && (
+        <Sidebar session={session} parts={parts} streaming={loading} />
+      )}
     </box>
   );
 }

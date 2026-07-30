@@ -1,4 +1,9 @@
-import { codeToTokensBase, type BundledLanguage, type ThemedToken, type SpecialLanguage } from "shiki";
+import {
+  type BundledLanguage,
+  type SpecialLanguage,
+  type ThemedToken,
+  codeToTokensBase,
+} from "shiki";
 import type { ThemeColors } from "../theme";
 
 export type HighlightSegment = {
@@ -8,18 +13,35 @@ export type HighlightSegment = {
   italic?: boolean;
 };
 
-function mapTokenColor(token: ThemedToken, colors: ThemeColors): string | undefined {
+function mapTokenColor(
+  token: ThemedToken,
+  colors: ThemeColors,
+): string | undefined {
   if (token.type === 1) return colors.textMuted;
   if (token.type === 2) return colors.success;
   if (token.type === 3) return colors.thinking;
   if (token.color) {
     const hex = token.color.toLowerCase();
-    if (hex.startsWith("#569cd6") || hex.startsWith("#4fc1ff") || hex.startsWith("#9cdcfe")) return colors.primary;
-    if (hex.startsWith("#ce9178") || hex.startsWith("#d16969") || hex.startsWith("#c586c0")) return colors.planMode;
-    if (hex.startsWith("#6a9955") || hex.startsWith("#499cd5")) return colors.textMuted;
-    if (hex.startsWith("#dcdcaa") || hex.startsWith("#ffd700")) return colors.info;
-    if (hex.startsWith("#b5cea8") || hex.startsWith("#4ec9b0")) return colors.success;
-    if (hex.startsWith("#c586c0") || hex.startsWith("#646695")) return colors.thinking;
+    if (
+      hex.startsWith("#569cd6") ||
+      hex.startsWith("#4fc1ff") ||
+      hex.startsWith("#9cdcfe")
+    )
+      return colors.primary;
+    if (
+      hex.startsWith("#ce9178") ||
+      hex.startsWith("#d16969") ||
+      hex.startsWith("#c586c0")
+    )
+      return colors.planMode;
+    if (hex.startsWith("#6a9955") || hex.startsWith("#499cd5"))
+      return colors.textMuted;
+    if (hex.startsWith("#dcdcaa") || hex.startsWith("#ffd700"))
+      return colors.info;
+    if (hex.startsWith("#b5cea8") || hex.startsWith("#4ec9b0"))
+      return colors.success;
+    if (hex.startsWith("#c586c0") || hex.startsWith("#646695"))
+      return colors.thinking;
   }
   return undefined;
 }
@@ -113,7 +135,7 @@ export async function highlightCode(
   lang: string | undefined,
   colors: ThemeColors,
 ): Promise<HighlightSegment[][]> {
-  const resolvedLang = lang ? LANG_ALIASES[lang] ?? lang : undefined;
+  const resolvedLang = lang ? (LANG_ALIASES[lang] ?? lang) : undefined;
 
   try {
     const tokens = await codeToTokensBase(code, {
@@ -132,11 +154,15 @@ export async function highlightCode(
   }
 }
 
-export function parseCodeBlocks(text: string): Array<
-  { type: "text"; content: string } | { type: "code"; lang: string | undefined; code: string }
+export function parseCodeBlocks(
+  text: string,
+): Array<
+  | { type: "text"; content: string }
+  | { type: "code"; lang: string | undefined; code: string }
 > {
   const blocks: Array<
-    { type: "text"; content: string } | { type: "code"; lang: string | undefined; code: string }
+    | { type: "text"; content: string }
+    | { type: "code"; lang: string | undefined; code: string }
   > = [];
   const regex = /```(\w*)\n([\s\S]*?)```/g;
   let lastIndex = 0;
@@ -144,7 +170,10 @@ export function parseCodeBlocks(text: string): Array<
 
   while ((match = regex.exec(text)) !== null) {
     if (match.index > lastIndex) {
-      blocks.push({ type: "text", content: text.slice(lastIndex, match.index) });
+      blocks.push({
+        type: "text",
+        content: text.slice(lastIndex, match.index),
+      });
     }
     blocks.push({ type: "code", lang: match[1] || undefined, code: match[2]! });
     lastIndex = match.index + match[0].length;

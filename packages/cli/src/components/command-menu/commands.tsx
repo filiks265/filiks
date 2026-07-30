@@ -1,9 +1,14 @@
 import { SUPPORTED_CHAT_MODELS } from "@filiks/shared";
-import {AgentsDialogContent, ModelsDialogContent, SessionsDialogContent, ThemeDialogContent } from "../dialogs";
+import { clearAuth } from "../../lib/auth";
+import { performLogin } from "../../lib/oauth";
 import { ConfirmDialog } from "../confirm-dialog";
+import {
+  AgentsDialogContent,
+  ModelsDialogContent,
+  SessionsDialogContent,
+  ThemeDialogContent,
+} from "../dialogs";
 import type { Command } from "./types";
-import {performLogin} from "../../lib/oauth";
-import {clearAuth} from "../../lib/auth";
 
 export const COMMANDS: Command[] = [
   {
@@ -21,7 +26,12 @@ export const COMMANDS: Command[] = [
     action: (ctx) => {
       ctx.dialog.open({
         title: "Select Agent",
-        children: <AgentsDialogContent currentMode={ctx.mode} onSelectMode={ctx.setMode} />,
+        children: (
+          <AgentsDialogContent
+            currentMode={ctx.mode}
+            onSelectMode={ctx.setMode}
+          />
+        ),
       });
     },
   },
@@ -32,7 +42,12 @@ export const COMMANDS: Command[] = [
     action: (ctx) => {
       ctx.dialog.open({
         title: "Select Model",
-        children: <ModelsDialogContent models={SUPPORTED_CHAT_MODELS}  onSelectModel={ctx.setModel} />,
+        children: (
+          <ModelsDialogContent
+            models={SUPPORTED_CHAT_MODELS}
+            onSelectModel={ctx.setModel}
+          />
+        ),
       });
     },
   },
@@ -66,11 +81,14 @@ export const COMMANDS: Command[] = [
       ctx.toast.show({ message: "Opening browser to sign in..." });
       try {
         await performLogin();
-        ctx.toast.show({variant: "success", message: "Signed in"});
+        ctx.toast.show({ variant: "success", message: "Signed in" });
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Sign in failed or timed out";
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Sign in failed or timed out";
 
-        ctx.toast.show({variant: "error", message});
+        ctx.toast.show({ variant: "error", message });
       }
     },
   },
@@ -115,7 +133,9 @@ export const COMMANDS: Command[] = [
     description: "Check for updates",
     value: "/update",
     action: (ctx) => {
-      ctx.toast.show({ message: "Run 'filiks update' in your terminal to update." });
+      ctx.toast.show({
+        message: "Run 'filiks update' in your terminal to update.",
+      });
     },
   },
   {

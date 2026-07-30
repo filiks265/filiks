@@ -1,9 +1,8 @@
+import { type ScrollBoxRenderable, TextAttributes } from "@opentui/core";
 import type { RefObject } from "react";
-import { TextAttributes, type ScrollBoxRenderable } from "@opentui/core";
-import { getFilteredCommands } from "./filter-commands";
-import { COMMANDS } from "./commands";
 import { useTheme } from "../../providers/theme";
-
+import { COMMANDS } from "./commands";
+import { getFilteredCommands } from "./filter-commands";
 
 // How many /items should be shown in the command menu at once. If there are more items, the user can scroll through them.
 const MAX_VISIBLE_ITEMS = 10;
@@ -30,7 +29,7 @@ export function CommandMenu({
   onSelect,
   onExecute,
 }: CommandMenuProps) {
-  const {colors} = useTheme();
+  const { colors } = useTheme();
   const filtered = getFilteredCommands(query);
   const visibleHeight = Math.min(filtered.length, MAX_VISIBLE_ITEMS);
 
@@ -57,12 +56,18 @@ export function CommandMenu({
             onMouseDown={() => onExecute(i)}
           >
             <box width={COMMAND_COL_WIDTH} flexShrink={0}>
-              <text selectable={false} fg={isSelected ? colors.textOnSelection : colors.text}>
+              <text
+                selectable={false}
+                fg={isSelected ? colors.textOnSelection : colors.text}
+              >
                 {cmd.name}
               </text>
             </box>
             <box flexGrow={1} flexShrink={1} overflow="hidden">
-              <text selectable={false} fg={isSelected ? colors.textOnSelection : colors.textMuted}>
+              <text
+                selectable={false}
+                fg={isSelected ? colors.textOnSelection : colors.textMuted}
+              >
                 {cmd.description}
               </text>
             </box>

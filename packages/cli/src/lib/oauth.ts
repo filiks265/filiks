@@ -4,140 +4,149 @@ import { saveAuth } from "./auth";
 const LOGIN_TIMEOUT_MS = 5 * 60 * 1000;
 
 type OAuthState = {
-    nonce: string;
-    port: number;
+  nonce: string;
+  port: number;
 };
 
 function toBase64Url(input: Uint8Array | string) {
-    return Buffer.from(input).toString("base64url");
+  return Buffer.from(input).toString("base64url");
 }
 
-async function createPkceChallenge(verifier: string){
-    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode (verifier));
-    return toBase64Url(new Uint8Array(digest));
+async function createPkceChallenge(verifier: string) {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(verifier),
+  );
+  return toBase64Url(new Uint8Array(digest));
 }
 
 function encodeState(state: OAuthState) {
-    return toBase64Url(JSON.stringify(state));
+  return toBase64Url(JSON.stringify(state));
 }
 
 function decodeState(state: string) {
-    const [encoded] = state.split(".");
-    if (!encoded) {
-        throw new Error("Invalid state");
-    }
-    return JSON.parse(Buffer.from(encoded, "base64url").toString()) as OAuthState;
+  const [encoded] = state.split(".");
+  if (!encoded) {
+    throw new Error("Invalid state");
+  }
+  return JSON.parse(Buffer.from(encoded, "base64url").toString()) as OAuthState;
 }
 
-function getErrorMessage(error: unknown){
-    return error instanceof Error ? error.message : String(error);
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
 }
 
-export async function performLogin(){
-    const clerkFrontendApi = process.env.CLERK_FRONTEND_API;
-    const clientId = process.env.CLERK_OAUTH_CLIENT_ID;
-    const apiUrl = process.env.API_URL ?? "http://localhost:3000";
+export async function performLogin() {
+  const clerkFrontendApi = process.env.CLERK_FRONTEND_API;
+  const clientId = process.env.CLERK_OAUTH_CLIENT_ID;
+  const apiUrl = process.env.API_URL ?? "http://localhost:3000";
 
-    if (!clerkFrontendApi) throw new Error("CLERK_FRONTEND_API is not set");
-    if (!clientId) throw new Error("CLERK_OAUTH_CLIENT_ID is not set");
+  if (!clerkFrontendApi) throw new Error("CLERK_FRONTEND_API is not set");
+  if (!clientId) throw new Error("CLERK_OAUTH_CLIENT_ID is not set");
 
-    const nonce = crypto.randomUUID();
-    const codeVerifier = toBase64Url(crypto.getRandomValues(new Uint8Array(32)));
-    const codeChallenge = await createPkceChallenge(codeVerifier);
+  const nonce = crypto.randomUUID();
+  const codeVerifier = toBase64Url(crypto.getRandomValues(new Uint8Array(32)));
+  const codeChallenge = await createPkceChallenge(codeVerifier);
 
-    let settled = false;
+  let settled = false;
 
-    return new Promise<{token: string}>((resolve, reject) => {
-        const server = Bun.serve({
-            port: 0,
-            hostname: "127.0.0.1",
-            async fetch(req) {
-                const url = new URL(req.url);
+  return new Promise<{ token: string }>((resolve, reject) => {
+    const server = Bun.serve({
+      port: 0,
+      hostname: "127.0.0.1",
+      async fetch(req) {
+        const url = new URL(req.url);
 
-                if (url.pathname !== "/callback") {
-                    return new Response("Not Found", { status: 404 });
-                }
+        if (url.pathname !== "/callback") {
+          return new Response("Not Found", { status: 404 });
+        }
 
-                const error = url.searchParams.get("error");
+        const error = url.searchParams.get("error");
 
-                if (error) {
-                    const msg = url.searchParams.get("error_description") ?? error;
-                    settled = true;
-                    reject(new Error(msg));
-                    setTimeout(() => server.stop(), 500);
-                    return new Response(`Authentication failed: ${msg}`, { status: 400 });
-                }
+        if (error) {
+          const msg = url.searchParams.get("error_description") ?? error;
+          settled = true;
+          reject(new Error(msg));
+          setTimeout(() => server.stop(), 500);
+          return new Response(`Authentication failed: ${msg}`, { status: 400 });
+        }
 
-                const code = url.searchParams.get("code");
-                const state = url.searchParams.get("state");
-                
-                if (!code || !state) {
-                    settled = true;
-                    reject(new Error("Missing code or state in callback"));
-                    setTimeout(() => server.stop(), 500);
-                    return new Response("Bad Request", { status: 400 });
-                }
+        const code = url.searchParams.get("code");
+        const state = url.searchParams.get("state");
 
-                // verify nonce from state
-                try {
-                    const payload = decodeState(state);
+        if (!code || !state) {
+          settled = true;
+          reject(new Error("Missing code or state in callback"));
+          setTimeout(() => server.stop(), 500);
+          return new Response("Bad Request", { status: 400 });
+        }
 
-                    if (payload.nonce !== nonce) throw new Error("State mismatch");
-                } catch (err) {
-                    settled = true;
-                    reject (err);
-                    setTimeout(() => server.stop(), 500);
-                    return new Response("Invalid state", { status: 400 });
-                }
+        // verify nonce from state
+        try {
+          const payload = decodeState(state);
 
-                try {
-                    // Exchange authorization code for an Clerk access token
-                    const redirectUri = `${apiUrl}/auth/callback`;
-                    const tokenRes = await fetch(`${clerkFrontendApi}/oauth/token`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                        body: new URLSearchParams({
-                            grant_type: "authorization_code",
-                            code,
-                            redirect_uri: redirectUri,
-                            client_id: clientId,
-                            code_verifier: codeVerifier, 
-                        }),
-                });
+          if (payload.nonce !== nonce) throw new Error("State mismatch");
+        } catch (err) {
+          settled = true;
+          reject(err);
+          setTimeout(() => server.stop(), 500);
+          return new Response("Invalid state", { status: 400 });
+        }
 
+        try {
+          // Exchange authorization code for an Clerk access token
+          const redirectUri = `${apiUrl}/auth/callback`;
+          const tokenRes = await fetch(`${clerkFrontendApi}/oauth/token`, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              grant_type: "authorization_code",
+              code,
+              redirect_uri: redirectUri,
+              client_id: clientId,
+              code_verifier: codeVerifier,
+            }),
+          });
 
-                if (!tokenRes.ok) {
-                    const details = await tokenRes.text();
-                    throw new Error(details || "Failed to exchange authorization code");
-                }
+          if (!tokenRes.ok) {
+            const details = await tokenRes.text();
+            throw new Error(details || "Failed to exchange authorization code");
+          }
 
-                const tokenData = (await tokenRes.json()) as {access_token: string; id_token?: string};
+          const tokenData = (await tokenRes.json()) as {
+            access_token: string;
+            id_token?: string;
+          };
 
-                settled = true;
-                saveAuth({token: tokenData.access_token, idToken: tokenData.id_token});
-                resolve({token: tokenData.access_token});
-                setTimeout(() => server.stop(), 500);
-                return new Response("Authenticated! You can close this tab.");
-            } catch (err) {
-                
-                settled = true;
-                reject(err);
-                const message = getErrorMessage(err);
-                setTimeout(() => server.stop(), 500);
-                return new Response(`Authentication failed: ${message}`, {status: 400});
-            }
-        },
+          settled = true;
+          saveAuth({
+            token: tokenData.access_token,
+            idToken: tokenData.id_token,
+          });
+          resolve({ token: tokenData.access_token });
+          setTimeout(() => server.stop(), 500);
+          return new Response("Authenticated! You can close this tab.");
+        } catch (err) {
+          settled = true;
+          reject(err);
+          const message = getErrorMessage(err);
+          setTimeout(() => server.stop(), 500);
+          return new Response(`Authentication failed: ${message}`, {
+            status: 400,
+          });
+        }
+      },
     });
 
     // Build state with port and nonce
     const port = server.port;
-    if (typeof port !== "number"){
-        server.stop();
-        reject(new Error("Failed to start callback server"));
-        return;
+    if (typeof port !== "number") {
+      server.stop();
+      reject(new Error("Failed to start callback server"));
+      return;
     }
 
-    const state = encodeState({port, nonce});
+    const state = encodeState({ port, nonce });
     const redirectUri = `${apiUrl}/auth/callback`;
 
     const authorizeUrl = new URL(`${clerkFrontendApi}/oauth/authorize`);
@@ -153,13 +162,11 @@ export async function performLogin(){
     void open(authorizeUrl.toString());
 
     setTimeout(() => {
-        if (!settled) {
-            settled = true;
-            server.stop();
-            reject(new Error("Login timed out"));
-        }
+      if (!settled) {
+        settled = true;
+        server.stop();
+        reject(new Error("Login timed out"));
+      }
     }, LOGIN_TIMEOUT_MS);
-});
+  });
 }
-
-

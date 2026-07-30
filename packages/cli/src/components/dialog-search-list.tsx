@@ -1,10 +1,10 @@
-import { useCallback, useRef, useState, type ReactNode } from "react";
 import {
-  InputRenderable,
-  ScrollBoxRenderable,
+  type InputRenderable,
+  type ScrollBoxRenderable,
   TextAttributes,
 } from "@opentui/core";
 import { useKeyboard } from "@opentui/react";
+import { type ReactNode, useCallback, useRef, useState } from "react";
 import { useKeyboardLayer } from "../providers/keyboard-layer";
 import { useTheme } from "../providers/theme";
 
@@ -40,10 +40,13 @@ export function DialogSearchList<T>({
   const inputRef = useRef<InputRenderable>(null);
   const scrollRef = useRef<ScrollBoxRenderable>(null);
   const { isTopLayer } = useKeyboardLayer();
-  const {colors} = useTheme();
+  const { colors } = useTheme();
 
-  const isControlled = controlledSearchValue !== undefined && onSearchChange !== undefined;
-  const searchValue = isControlled ? controlledSearchValue : internalSearchValue;
+  const isControlled =
+    controlledSearchValue !== undefined && onSearchChange !== undefined;
+  const searchValue = isControlled
+    ? controlledSearchValue
+    : internalSearchValue;
 
   const handleContentChange = useCallback(() => {
     const text = inputRef.current?.value ?? "";

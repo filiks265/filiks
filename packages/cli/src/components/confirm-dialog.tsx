@@ -1,5 +1,5 @@
-import { useCallback } from "react";
 import { useKeyboard } from "@opentui/react";
+import { useCallback } from "react";
 import { useDialog } from "../providers/dialog";
 import { useTheme } from "../providers/theme";
 
@@ -9,7 +9,11 @@ type ConfirmDialogProps = {
   onConfirm: () => void;
 };
 
-export function ConfirmDialog({ message, confirmLabel = "Yes", onConfirm }: ConfirmDialogProps) {
+export function ConfirmDialog({
+  message,
+  confirmLabel = "Yes",
+  onConfirm,
+}: ConfirmDialogProps) {
   const { close } = useDialog();
   const { colors } = useTheme();
 

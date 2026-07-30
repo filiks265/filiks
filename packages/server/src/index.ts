@@ -1,31 +1,30 @@
-import { Hono } from "hono";
+import { db } from "@filiks/database/client";
 import { sentry } from "@sentry/hono/bun";
 import * as Sentry from "@sentry/hono/bun";
+import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { requireAuth } from "../middleware/require-auth";
-import { db } from "@filiks/database/client";
-import sessions from "./routes/sessions";
-import chat from "./routes/chat";
 import auth from "./routes/auth";
+import chat from "./routes/chat";
+import sessions from "./routes/sessions";
 
 const app = new Hono();
 
-
 // Validate critical env vars at startup
 const CRITICAL_ENV_VARS = [
-  'CLERK_SECRET_KEY',
-  'CLERK_PUBLISHABLE_KEY',
-  'DATABASE_URL',
+  "CLERK_SECRET_KEY",
+  "CLERK_PUBLISHABLE_KEY",
+  "DATABASE_URL",
 ] as const;
 
 const MODEL_ENV_VARS = [
-  'OPENCODE_ZEN_API_KEY',
-  'OPENAI_API_KEY',
-  'ANTHROPIC_API_KEY',
-  'GOOGLE_GENERATIVE_AI_API_KEY',
-  'GROQ_API_KEY',
-  'NVIDIA_API_KEY',
-  'OPENROUTER_API_KEY',
+  "OPENCODE_ZEN_API_KEY",
+  "OPENAI_API_KEY",
+  "ANTHROPIC_API_KEY",
+  "GOOGLE_GENERATIVE_AI_API_KEY",
+  "GROQ_API_KEY",
+  "NVIDIA_API_KEY",
+  "OPENROUTER_API_KEY",
 ] as const;
 
 for (const name of CRITICAL_ENV_VARS) {
@@ -35,11 +34,13 @@ for (const name of CRITICAL_ENV_VARS) {
   }
 }
 
-const availableModels = MODEL_ENV_VARS.filter(v => process.env[v]);
+const availableModels = MODEL_ENV_VARS.filter((v) => process.env[v]);
 if (availableModels.length > 0) {
-  console.log(`[startup] Model API keys available: ${availableModels.join(', ')}`);
+  console.log(
+    `[startup] Model API keys available: ${availableModels.join(", ")}`,
+  );
 } else {
-  console.warn('[startup] No model API keys found — all AI features will fail');
+  console.warn("[startup] No model API keys found — all AI features will fail");
 }
 // Warm up the database connection to absorb Neon cold-start delay
 db.$queryRaw`SELECT 1`
@@ -104,7 +105,6 @@ app.onError((error, c) => {
 
 app.use("/sessions/*", requireAuth);
 app.use("/chat/*", requireAuth);
-
 
 const routes = app
   .route("/auth", auth)

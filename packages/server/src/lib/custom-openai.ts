@@ -1,12 +1,12 @@
 import type {
   LanguageModelV4,
-  LanguageModelV4Prompt,
-  LanguageModelV4StreamPart,
-  LanguageModelV4StreamResult,
-  LanguageModelV4GenerateResult,
   LanguageModelV4CallOptions,
   LanguageModelV4FinishReason,
   LanguageModelV4FunctionTool,
+  LanguageModelV4GenerateResult,
+  LanguageModelV4Prompt,
+  LanguageModelV4StreamPart,
+  LanguageModelV4StreamResult,
 } from "@ai-sdk/provider";
 
 export type CustomOpenAIConfig = {
@@ -26,9 +26,11 @@ type OpenAIMessage = {
   tool_call_id?: string;
 };
 
-function extractToolResultContent(
-  output: { type: string; value?: unknown; reason?: string },
-): string {
+function extractToolResultContent(output: {
+  type: string;
+  value?: unknown;
+  reason?: string;
+}): string {
   if (output.type === "text" || output.type === "error-text") {
     return (output as { value: string }).value;
   }
@@ -39,7 +41,8 @@ function extractToolResultContent(
     return (output as { reason?: string }).reason || "Execution denied";
   }
   if (output.type === "content") {
-    const parts = (output as { value: Array<{ type: string; text?: string }> }).value;
+    const parts = (output as { value: Array<{ type: string; text?: string }> })
+      .value;
     return parts
       .filter((p) => p.type === "text")
       .map((p) => p.text)
@@ -66,7 +69,14 @@ function convertPrompt(prompt: LanguageModelV4Prompt): OpenAIMessage[] {
         break;
       }
       case "assistant": {
-        const parts = msg.content as Array<{ type: string; text?: string; toolCallId?: string; toolName?: string; args?: object; input?: unknown }>;
+        const parts = msg.content as Array<{
+          type: string;
+          text?: string;
+          toolCallId?: string;
+          toolName?: string;
+          args?: object;
+          input?: unknown;
+        }>;
         const text = parts
           .filter((p) => p.type === "text")
           .map((p) => (p as { text: string }).text)
@@ -74,7 +84,11 @@ function convertPrompt(prompt: LanguageModelV4Prompt): OpenAIMessage[] {
         const toolCalls = parts
           .filter((p) => p.type === "tool-call")
           .map((p) => {
-            const tc = p as { toolCallId: string; toolName: string; input: unknown };
+            const tc = p as {
+              toolCallId: string;
+              toolName: string;
+              input: unknown;
+            };
             return {
               id: tc.toolCallId,
               type: "function" as const,
@@ -92,21 +106,31 @@ function convertPrompt(prompt: LanguageModelV4Prompt): OpenAIMessage[] {
         if (!text && toolCalls.length === 0) break;
         messages.push({
           role: "assistant",
-          content: toolCalls.length > 0 ? null : (text || ""),
+          content: toolCalls.length > 0 ? null : text || "",
           ...(toolCalls.length > 0 ? { tool_calls: toolCalls } : {}),
         });
         break;
       }
       case "tool": {
-        const parts = msg.content as Array<{ type: string; toolCallId?: string; output?: { type: string; value?: unknown; reason?: string } }>;
+        const parts = msg.content as Array<{
+          type: string;
+          toolCallId?: string;
+          output?: { type: string; value?: unknown; reason?: string };
+        }>;
         const toolResult = parts[0] as
-          | { type: "tool-result"; toolCallId: string; output: { type: string; value?: unknown; reason?: string } }
+          | {
+              type: "tool-result";
+              toolCallId: string;
+              output: { type: string; value?: unknown; reason?: string };
+            }
           | undefined;
 
         messages.push({
           role: "tool",
           tool_call_id: toolResult?.toolCallId ?? "",
-          content: toolResult?.output ? extractToolResultContent(toolResult.output) : "",
+          content: toolResult?.output
+            ? extractToolResultContent(toolResult.output)
+            : "",
         });
         break;
       }
@@ -139,7 +163,9 @@ function convertPrompt(prompt: LanguageModelV4Prompt): OpenAIMessage[] {
     }
     result.push(msg);
     if (msg.role === "tool" && msg.tool_call_id) {
-      pendingToolCallIds = pendingToolCallIds.filter((id) => id !== msg.tool_call_id);
+      pendingToolCallIds = pendingToolCallIds.filter(
+        (id) => id !== msg.tool_call_id,
+      );
     }
   }
 
@@ -156,9 +182,7 @@ function convertPrompt(prompt: LanguageModelV4Prompt): OpenAIMessage[] {
   return result;
 }
 
-function convertTools(
-  tools: Array<LanguageModelV4FunctionTool>,
-): Array<{
+function convertTools(tools: Array<LanguageModelV4FunctionTool>): Array<{
   type: "function";
   function: {
     name: string;
@@ -169,9 +193,9 @@ function convertTools(
 }> {
   return tools.map((t) => {
     const params = { ...(t.inputSchema as Record<string, unknown>) };
-    delete params.$schema;
-    delete params.additionalProperties;
-    delete params.definitions;
+    params.$schema = undefined;
+    params.additionalProperties = undefined;
+    params.definitions = undefined;
     return {
       type: "function" as const,
       function: {
@@ -227,7 +251,14 @@ export function createCustomOpenAIModel(
     async doStream(
       options: LanguageModelV4CallOptions,
     ): Promise<LanguageModelV4StreamResult> {
-      const { prompt, tools, toolChoice, abortSignal, includeRawChunks, ...rest } = options;
+      const {
+        prompt,
+        tools,
+        toolChoice,
+        abortSignal,
+        includeRawChunks,
+        ...rest
+      } = options;
       const messages = convertPrompt(prompt);
 
       if (!config.apiKey) {
@@ -240,22 +271,31 @@ export function createCustomOpenAIModel(
         stream: true,
       };
 
-      if (rest.maxOutputTokens != null) bodyObj.max_tokens = rest.maxOutputTokens;
+      if (rest.maxOutputTokens != null)
+        bodyObj.max_tokens = rest.maxOutputTokens;
       if (rest.temperature != null) bodyObj.temperature = rest.temperature;
       if (rest.topP != null) bodyObj.top_p = rest.topP;
       if (rest.stopSequences != null && rest.stopSequences.length > 0)
         bodyObj.stop = rest.stopSequences;
-      if (rest.presencePenalty != null) bodyObj.presence_penalty = rest.presencePenalty;
-      if (rest.frequencyPenalty != null) bodyObj.frequency_penalty = rest.frequencyPenalty;
+      if (rest.presencePenalty != null)
+        bodyObj.presence_penalty = rest.presencePenalty;
+      if (rest.frequencyPenalty != null)
+        bodyObj.frequency_penalty = rest.frequencyPenalty;
       if (rest.seed != null) bodyObj.seed = rest.seed;
-      if (rest.responseFormat?.type === "json") bodyObj.response_format = { type: "json_object" };
+      if (rest.responseFormat?.type === "json")
+        bodyObj.response_format = { type: "json_object" };
 
       if (tools && tools.length > 0) {
         bodyObj.tools = convertTools(
-          tools.filter((t): t is LanguageModelV4FunctionTool => t.type === "function"),
+          tools.filter(
+            (t): t is LanguageModelV4FunctionTool => t.type === "function",
+          ),
         );
         if (toolChoice?.type === "tool") {
-          bodyObj.tool_choice = { type: "function", function: { name: toolChoice.toolName } };
+          bodyObj.tool_choice = {
+            type: "function",
+            function: { name: toolChoice.toolName },
+          };
         } else if (toolChoice?.type === "required") {
           bodyObj.tool_choice = "required";
         } else if (toolChoice?.type === "none") {
@@ -292,13 +332,16 @@ export function createCustomOpenAIModel(
         } catch {
           errorDetail = errorBody || response.statusText;
         }
-        console.error(`[${config.name}] doStream body on ${response.status}:`, body);
+        console.error(
+          `[${config.name}] doStream body on ${response.status}:`,
+          body,
+        );
         throw new Error(
           `${config.name} API error (${response.status}): ${errorDetail}`,
         );
       }
 
-      const reader = response.body!.getReader();
+      const reader = response.body?.getReader();
       const responseHeaders: Record<string, string> = {};
       response.headers.forEach((v, k) => {
         responseHeaders[k] = v;
@@ -344,13 +387,15 @@ export function createCustomOpenAIModel(
 
                 if (chunk.error) {
                   const errMsg =
-                    (chunk.error as Record<string, unknown>)?.message as string ||
-                    String(chunk.error);
+                    ((chunk.error as Record<string, unknown>)
+                      ?.message as string) || String(chunk.error);
                   controller.error(new Error(errMsg));
                   return;
                 }
 
-                const choice = (chunk.choices as Array<Record<string, unknown>> | undefined)?.[0];
+                const choice = (
+                  chunk.choices as Array<Record<string, unknown>> | undefined
+                )?.[0];
                 if (!choice) continue;
 
                 if (choice.finish_reason) {
@@ -362,7 +407,10 @@ export function createCustomOpenAIModel(
                 if (delta.reasoning_content != null) {
                   const text = String(delta.reasoning_content);
                   if (!hasStartedReasoning) {
-                    controller.enqueue({ type: "reasoning-start", id: reasoningId });
+                    controller.enqueue({
+                      type: "reasoning-start",
+                      id: reasoningId,
+                    });
                     hasStartedReasoning = true;
                   }
                   controller.enqueue({
@@ -400,7 +448,8 @@ export function createCustomOpenAIModel(
                     };
                     if (tc.id) existing.id = tc.id;
                     if (tc.function?.name) existing.name += tc.function.name;
-                    if (tc.function?.arguments) existing.args += tc.function.arguments;
+                    if (tc.function?.arguments)
+                      existing.args += tc.function.arguments;
                     toolCallAccumulators.set(tc.index, existing);
                   }
                 }
@@ -430,7 +479,9 @@ export function createCustomOpenAIModel(
                     }
                   }
 
-                  const usage = chunk.usage as Record<string, unknown> | undefined;
+                  const usage = chunk.usage as
+                    | Record<string, unknown>
+                    | undefined;
                   controller.enqueue({
                     type: "finish",
                     finishReason: mapFinishReason(finishReason),
@@ -442,7 +493,8 @@ export function createCustomOpenAIModel(
                         cacheWrite: undefined,
                       },
                       outputTokens: {
-                        total: (usage?.completion_tokens as number) ?? undefined,
+                        total:
+                          (usage?.completion_tokens as number) ?? undefined,
                         text: undefined,
                         reasoning: undefined,
                       },
@@ -478,8 +530,17 @@ export function createCustomOpenAIModel(
               type: "finish",
               finishReason: mapFinishReason(finishReason),
               usage: {
-                inputTokens: { total: undefined, noCache: undefined, cacheRead: undefined, cacheWrite: undefined },
-                outputTokens: { total: undefined, text: undefined, reasoning: undefined },
+                inputTokens: {
+                  total: undefined,
+                  noCache: undefined,
+                  cacheRead: undefined,
+                  cacheWrite: undefined,
+                },
+                outputTokens: {
+                  total: undefined,
+                  text: undefined,
+                  reasoning: undefined,
+                },
               },
               providerMetadata: undefined,
             });
@@ -517,17 +578,23 @@ export function createCustomOpenAIModel(
         stream: false,
       };
 
-      if (rest.maxOutputTokens != null) bodyObj.max_tokens = rest.maxOutputTokens;
+      if (rest.maxOutputTokens != null)
+        bodyObj.max_tokens = rest.maxOutputTokens;
       if (rest.temperature != null) bodyObj.temperature = rest.temperature;
       if (rest.topP != null) bodyObj.top_p = rest.topP;
       if (rest.seed != null) bodyObj.seed = rest.seed;
 
       if (tools && tools.length > 0) {
         bodyObj.tools = convertTools(
-          tools.filter((t): t is LanguageModelV4FunctionTool => t.type === "function"),
+          tools.filter(
+            (t): t is LanguageModelV4FunctionTool => t.type === "function",
+          ),
         );
         if (toolChoice?.type === "tool") {
-          bodyObj.tool_choice = { type: "function", function: { name: toolChoice.toolName } };
+          bodyObj.tool_choice = {
+            type: "function",
+            function: { name: toolChoice.toolName },
+          };
         } else if (toolChoice?.type === "required") {
           bodyObj.tool_choice = "required";
         } else if (toolChoice?.type === "none") {
@@ -564,27 +631,41 @@ export function createCustomOpenAIModel(
         } catch {
           errorDetail = errorBody || response.statusText;
         }
-        console.error(`[${config.name}] doGenerate body on ${response.status}:`, body);
+        console.error(
+          `[${config.name}] doGenerate body on ${response.status}:`,
+          body,
+        );
         throw new Error(
           `${config.name} API error (${response.status}): ${errorDetail}`,
         );
       }
 
       const data = (await response.json()) as Record<string, unknown>;
-      const choice = (data.choices as Array<Record<string, unknown>> | undefined)?.[0];
+      const choice = (
+        data.choices as Array<Record<string, unknown>> | undefined
+      )?.[0];
       const message = (choice?.message as Record<string, unknown>) || {};
       const responseHeaders: Record<string, string> = {};
       response.headers.forEach((v, k) => {
         responseHeaders[k] = v;
       });
 
-      const content = message.content as string | undefined || "";
+      const content = (message.content as string | undefined) || "";
       const finishReason = mapFinishReason(
-        (data.choices as Array<Record<string, unknown>> | undefined)?.[0]?.finish_reason as string | null,
+        (data.choices as Array<Record<string, unknown>> | undefined)?.[0]
+          ?.finish_reason as string | null,
       );
       const usage = data.usage as Record<string, unknown> | undefined;
 
-      const outputContent: Array<{ type: "text"; text: string } | { type: "tool-call"; toolCallId: string; toolName: string; input: string }> = [];
+      const outputContent: Array<
+        | { type: "text"; text: string }
+        | {
+            type: "tool-call";
+            toolCallId: string;
+            toolName: string;
+            input: string;
+          }
+      > = [];
       outputContent.push({ type: "text" as const, text: content });
 
       const rawToolCalls = message.tool_calls as

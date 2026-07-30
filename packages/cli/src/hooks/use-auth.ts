@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { getUser, onAuthChange } from "../lib/auth";
 
 export function useAuth() {

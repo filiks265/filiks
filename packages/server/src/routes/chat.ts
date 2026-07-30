@@ -1,28 +1,28 @@
-import { Hono } from "hono";
-import { zValidator } from "@hono/zod-validator";
-import { z } from "zod";
+import type { Prisma } from "@filiks/database";
+import { db } from "@filiks/database/client";
 import {
-  convertToModelMessages,
-  streamText,
-  validateUIMessages,
+  type ModeType,
+  type ToolContracts,
+  getToolContracts,
+  modeSchema,
+} from "@filiks/shared";
+import { zValidator } from "@hono/zod-validator";
+import {
   type InferUITools,
   type LanguageModelUsage,
   type UIMessage,
+  convertToModelMessages,
+  streamText,
+  validateUIMessages,
 } from "ai";
-import { db } from "@filiks/database/client";
-import type { Prisma } from "@filiks/database";
-import {
-  getToolContracts,
-  modeSchema,
-  type ModeType,
-  type ToolContracts,
-} from "@filiks/shared";
-import { buildSystemPrompt } from "../system-prompt";
-import { ContextRuntime } from "../lib/context-runtime";
+import { Hono } from "hono";
+import { z } from "zod";
 import type { AuthenticatedEnv } from "../../middleware/require-auth";
+import { ContextRuntime } from "../lib/context-runtime";
 // import {requireCreditsBalance} from "../middleware/require-credits-balance";
 // import {calculatedCreditsForUsage} from "../lib/credits";
 import { isSupportedChatModel, resolveChatModel } from "../lib/models";
+import { buildSystemPrompt } from "../system-prompt";
 
 type ChatMessageMetadata = {
   mode?: ModeType;
@@ -158,9 +158,9 @@ const app = new Hono<AuthenticatedEnv>().post(
 
     return result.toUIMessageStreamResponse<FiliksUIMessage>({
       originalMessages: trimmedResult.messages as unknown as FiliksUIMessage[],
-      messageMetadata({part}) {
-        if (part.type === "start"){
-          return {mode, model};
+      messageMetadata({ part }) {
+        if (part.type === "start") {
+          return { mode, model };
         }
 
         if (part.type !== "finish") return undefined;
@@ -169,12 +169,12 @@ const app = new Hono<AuthenticatedEnv>().post(
           mode,
           model,
           durationMs: Date.now() - startTime,
-          ...(completedUsage ? {usage: completedUsage} : {}),
+          ...(completedUsage ? { usage: completedUsage } : {}),
         };
       },
-      async onFinish(event){
+      async onFinish(event) {
         if (event.isAborted) return;
-        
+
         if (hasPendingToolCalls(event.responseMessage)) return;
 
         await db.session.update({
@@ -208,7 +208,7 @@ const app = new Hono<AuthenticatedEnv>().post(
         //   });
         // }
       },
-      onError(error){
+      onError(error) {
         return error instanceof Error ? error.message : String(error);
       },
     });

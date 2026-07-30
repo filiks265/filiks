@@ -1,21 +1,21 @@
-import { useMemo, useRef } from "react";
 import { useChat as useAiChat } from "@ai-sdk/react";
+import type {
+  ModeType,
+  SupportedChatModelId,
+  ToolContracts,
+} from "@filiks/shared";
 import {
   DefaultChatTransport,
   type InferUITools,
-  lastAssistantMessageIsCompleteWithToolCalls,
   type LanguageModelUsage,
   type UIMessage,
+  lastAssistantMessageIsCompleteWithToolCalls,
 } from "ai";
-import {
-  type ModeType,
-  type SupportedChatModelId,
-  type ToolContracts,
-} from "@filiks/shared";
+import { useMemo, useRef } from "react";
 import { apiClient } from "../lib/api-client";
 import { getAuth } from "../lib/auth";
-import { ToolRuntime, ModePermissionPolicy } from "../lib/tool-runtime";
 import { LocalToolAdapter } from "../lib/local-tools";
+import { ModePermissionPolicy, ToolRuntime } from "../lib/tool-runtime";
 
 export type ChatMessageMetadata = {
   mode?: ModeType;
@@ -89,7 +89,8 @@ export function useChat(sessionId: string, initialMessages: Message[]) {
     onToolCall({ toolCall }) {
       const mode = chat.messages.at(-1)?.metadata?.mode ?? "BUILD";
 
-      void runtime.execute(toolCall.toolName, toolCall.input, mode)
+      void runtime
+        .execute(toolCall.toolName, toolCall.input, mode)
         .then((result) => {
           if (result.success) {
             chat.addToolOutput({
@@ -110,14 +111,13 @@ export function useChat(sessionId: string, initialMessages: Message[]) {
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
   });
   const error = chat.error
-    ? (chat.error instanceof TypeError
-        ? new Error(
-            `Cannot reach the server at ${apiUrlRef.current}. ` +
-            "Set API_URL in a .env file next to the binary (e.g., API_URL=https://your-server.com).",
-          )
-        : chat.error instanceof Error
-          ? chat.error
-          : new Error(String(chat.error)))
+    ? chat.error instanceof TypeError
+      ? new Error(
+          `Cannot reach the server at ${apiUrlRef.current}. Set API_URL in a .env file next to the binary (e.g., API_URL=https://your-server.com).`,
+        )
+      : chat.error instanceof Error
+        ? chat.error
+        : new Error(String(chat.error))
     : null;
 
   return {
@@ -143,6 +143,5 @@ export function useChat(sessionId: string, initialMessages: Message[]) {
     interrupt: chat.stop,
   };
 }
-
 
 // export default useChat;

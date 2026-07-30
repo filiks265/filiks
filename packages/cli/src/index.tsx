@@ -1,12 +1,12 @@
 import "dotenv/config";
+import { existsSync, unlinkSync } from "node:fs";
 import { createCliRenderer } from "@opentui/core";
 import { createRoot } from "@opentui/react";
-import { createMemoryRouter, RouterProvider } from "react-router"; 
+import { RouterProvider, createMemoryRouter } from "react-router";
 import { RootLayout } from "./layouts/root-layout";
 import { Home } from "./screens/home";
 import { NewSession } from "./screens/new-session";
 import { Session } from "./screens/session";
-import { existsSync, unlinkSync } from "fs";
 
 if (process.argv[1] === "update" || process.argv[2] === "update") {
   const { update } = await import("./lib/update");
@@ -14,11 +14,12 @@ if (process.argv[1] === "update" || process.argv[2] === "update") {
   process.exit(0);
 }
 
-const bakPath = process.execPath + ".bak";
+const bakPath = `${process.execPath}.bak`;
 if (existsSync(bakPath)) {
-  try { unlinkSync(bakPath); } catch {}
+  try {
+    unlinkSync(bakPath);
+  } catch {}
 }
-
 
 const router = createMemoryRouter([
   {
@@ -26,12 +27,11 @@ const router = createMemoryRouter([
     element: <RootLayout />,
     children: [
       { index: true, element: <Home /> },
-      { path: "sessions/new", element: <NewSession/> },
+      { path: "sessions/new", element: <NewSession /> },
       { path: "sessions/:id", element: <Session /> },
-    ]
-  }
+    ],
+  },
 ]);
-
 
 function App() {
   return <RouterProvider router={router} />;

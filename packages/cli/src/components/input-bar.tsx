@@ -1,30 +1,30 @@
-import { readdir } from "fs/promises";
+import { readdir } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
 
-import {
-  useRef,
-  useCallback,
-  useState,
-  useEffect,
-  type RefObject,
-} from "react";
+import { Mode } from "@filiks/shared";
 import { TextAttributes } from "@opentui/core";
-import type { TextareaRenderable, ScrollBoxRenderable } from "@opentui/core";
-import { useKeyboard, useRenderer } from "@opentui/react";
+import type { ScrollBoxRenderable, TextareaRenderable } from "@opentui/core";
 import type { KeyBinding } from "@opentui/core";
+import { useKeyboard, useRenderer } from "@opentui/react";
+import {
+  type RefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useNavigate } from "react-router";
+import { useDialog } from "../providers/dialog";
+import { useKeyboardLayer } from "../providers/keyboard-layer";
+import { usePromptConfig } from "../providers/prompt-config";
+import { useTheme } from "../providers/theme";
+import { useToast } from "../providers/toast";
 import { EmptyBorder } from "./border";
-import { ShortcutHelpContent } from "./shortcut-help";
-import { StatusBar } from "./status-bar";
 import { CommandMenu } from "./command-menu";
 import type { Command } from "./command-menu/types";
 import { useCommandMenu } from "./command-menu/use-command-menu";
-import { useToast } from "../providers/toast";
-import { useKeyboardLayer } from "../providers/keyboard-layer";
-import { useDialog } from "../providers/dialog";
-import { useTheme } from "../providers/theme";
-import { usePromptConfig } from "../providers/prompt-config";
-import { Mode } from "@filiks/shared";
+import { ShortcutHelpContent } from "./shortcut-help";
+import { StatusBar } from "./status-bar";
 
 const MAX_VISIBLE_MENTIONS = 8;
 const CURRENT_DIRECTORY = process.cwd();
@@ -318,8 +318,10 @@ export function InputBar({ onSubmit, disabled }: Props) {
     MentionCandidate[]
   >([]);
   const [mentionSelectedIndex, setMentionSelectedIndex] = useState(0);
-  const [pasteChips, setPasteChips] = useState<{ id: number; content: string; lines: number }[]>([]);
-  let nextChipId = useRef(0);
+  const [pasteChips, setPasteChips] = useState<
+    { id: number; content: string; lines: number }[]
+  >([]);
+  const nextChipId = useRef(0);
 
   const {
     showCommandMenu,
@@ -418,16 +420,16 @@ export function InputBar({ onSubmit, disabled }: Props) {
     previousTextLengthRef.current = 0;
   }, [disabled, onSubmit, pasteChips]);
 
-  const handleMentionExecute = useCallback((index: number) => {
-    const textarea = textareaRef.current;
-    const mention = activeMentionRef.current;
-    const candidate = mentionCandidates[index];
+  const handleMentionExecute = useCallback(
+    (index: number) => {
+      const textarea = textareaRef.current;
+      const mention = activeMentionRef.current;
+      const candidate = mentionCandidates[index];
 
-    if (!textarea || !mention || !candidate) return;
+      if (!textarea || !mention || !candidate) return;
 
-    const insertion = candidate.kind === "directory"
-     ? candidate.path
-      : `${candidate.path}`;
+      const insertion =
+        candidate.kind === "directory" ? candidate.path : `${candidate.path}`;
 
       const nextText = `${textarea.plainText.slice(0, mention.start)}@${insertion}${textarea.plainText.slice(mention.end)}`;
 
@@ -435,16 +437,16 @@ export function InputBar({ onSubmit, disabled }: Props) {
       textarea.cursorOffset = mention.start + insertion.length + 1;
 
       syncMentionMenu(nextText, textarea.cursorOffset);
-  }, [mentionCandidates, syncMentionMenu]);
+    },
+    [mentionCandidates, syncMentionMenu],
+  );
 
   const handleTextareaCursorChange = useCallback(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
     syncMentionMenu(textarea.plainText, textarea.cursorOffset);
-  }, [syncMentionMenu]);  
-
-  
+  }, [syncMentionMenu]);
 
   const handleCommand = useCallback(
     (command: Command | undefined) => {
@@ -463,7 +465,7 @@ export function InputBar({ onSubmit, disabled }: Props) {
           setModel,
         });
       } else {
-        textarea.insertText(command.value + "");
+        textarea.insertText(`${command.value}`);
       }
     },
     [renderer, toast, dialog, navigate, mode, setMode, setModel],
@@ -479,7 +481,7 @@ export function InputBar({ onSubmit, disabled }: Props) {
 
   // Keep the file picker in sync with the current @mention token
   useEffect(() => {
-    if (!activeMention){
+    if (!activeMention) {
       setMentionCandidates([]);
       return;
     }
@@ -490,7 +492,7 @@ export function InputBar({ onSubmit, disabled }: Props) {
 
       setMentionCandidates(nextCandidates);
       setMentionSelectedIndex((currentIndex) => {
-        if (nextCandidates.length === 0){
+        if (nextCandidates.length === 0) {
           return 0;
         }
         return Math.min(currentIndex, nextCandidates.length - 1);
@@ -502,7 +504,7 @@ export function InputBar({ onSubmit, disabled }: Props) {
     return () => {
       ignore = true;
     };
-  }, [activeMention])
+  }, [activeMention]);
 
   // Wire up textarea submit handler once so it always reads the latest state
   useEffect(() => {
@@ -573,7 +575,7 @@ export function InputBar({ onSubmit, disabled }: Props) {
     if (disabled) return;
     if (!showMentionMenu || !isTopLayer("mention")) return;
 
-    if (key.name === "escape"){
+    if (key.name === "escape") {
       key.preventDefault();
       closeMentionMenu();
     } else if (key.name === "up") {
@@ -586,14 +588,17 @@ export function InputBar({ onSubmit, disabled }: Props) {
         }
         return nextIndex;
       });
-    } else if (key.name === "down"){
+    } else if (key.name === "down") {
       key.preventDefault();
       setMentionSelectedIndex((currentIndex) => {
-        if (mentionCandidates.length === 0){
+        if (mentionCandidates.length === 0) {
           return 0;
         }
 
-        const nextIndex = Math.min(mentionCandidates.length - 1, currentIndex + 1);
+        const nextIndex = Math.min(
+          mentionCandidates.length - 1,
+          currentIndex + 1,
+        );
         const scrollbox = mentionScrollRef.current;
 
         if (scrollbox) {
@@ -670,14 +675,24 @@ export function InputBar({ onSubmit, disabled }: Props) {
           {pasteChips.length > 0 && (
             <box flexDirection="row" flexWrap="wrap" gap={1} flexShrink={0}>
               {pasteChips.map((chip) => (
-                <box key={chip.id} flexDirection="row" gap={0} flexShrink={0} alignItems="center">
+                <box
+                  key={chip.id}
+                  flexDirection="row"
+                  gap={0}
+                  flexShrink={0}
+                  alignItems="center"
+                >
                   <text fg={colors.info}>Pasted {chip.lines}L</text>
                   <text
                     fg={colors.textMuted}
                     attributes={TextAttributes.DIM}
-                    onMouseDown={() => setPasteChips((prev) => prev.filter((c) => c.id !== chip.id))}
+                    onMouseDown={() =>
+                      setPasteChips((prev) =>
+                        prev.filter((c) => c.id !== chip.id),
+                      )
+                    }
                   >
-                    {' ×'}
+                    {" ×"}
                   </text>
                 </box>
               ))}
@@ -685,11 +700,16 @@ export function InputBar({ onSubmit, disabled }: Props) {
           )}
           <textarea
             ref={textareaRef}
-            focused={!disabled && (isTopLayer("base") || isTopLayer("command") || isTopLayer("mention"))}
+            focused={
+              !disabled &&
+              (isTopLayer("base") ||
+                isTopLayer("command") ||
+                isTopLayer("mention"))
+            }
             keyBindings={TEXTAREA_KEY_BINDINGS}
             onContentChange={handleTextareaContentChange}
             onCursorChange={handleTextareaCursorChange}
-            placeholder={`Ask anything... Fix a bug in the database`}
+            placeholder={"Ask anything... Fix a bug in the database"}
           />
           <StatusBar />
         </box>

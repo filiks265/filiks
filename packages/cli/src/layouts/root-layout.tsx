@@ -1,11 +1,11 @@
 import { Outlet } from "react-router";
-import { ToastProvider } from "../providers/toast";
+import { VersionCheck } from "../components/version-check";
 import { DialogProvider } from "../providers/dialog";
 import { KeyboardLayerProvider } from "../providers/keyboard-layer";
-import { ThemeProvider } from "../providers/theme";
-import { ThemedRoot } from "./themed-root";
 import { PromptConfigProvider } from "../providers/prompt-config";
-import { VersionCheck } from "../components/version-check";
+import { ThemeProvider } from "../providers/theme";
+import { ToastProvider } from "../providers/toast";
+import { ThemedRoot } from "./themed-root";
 
 export function RootLayout() {
   return (

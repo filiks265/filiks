@@ -5,7 +5,10 @@ type SystemPromptParams = {
   profileSuffix?: string;
 };
 
-export function buildSystemPrompt({ mode, profileSuffix }: SystemPromptParams): string {
+export function buildSystemPrompt({
+  mode,
+  profileSuffix,
+}: SystemPromptParams): string {
   const parts: string[] = [];
 
   parts.push(`You are an expert software engineer working as a coding assistant inside a terminal application.

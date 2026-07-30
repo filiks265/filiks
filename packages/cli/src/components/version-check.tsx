@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { useToast } from "../providers/toast";
 import { VERSION } from "../lib/version";
+import { useToast } from "../providers/toast";
 
 const REPO = "filiks265/filiks";
 
@@ -28,7 +28,9 @@ export function VersionCheck() {
       })
       .catch(() => {});
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return null;

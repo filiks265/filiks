@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from "react";
-import { TextAttributes, RGBA } from "@opentui/core";
+import { RGBA, TextAttributes } from "@opentui/core";
+import { type ReactNode, useState } from "react";
 import { useTheme } from "../../providers/theme";
 
 type Props = {

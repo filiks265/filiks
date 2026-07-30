@@ -1,5 +1,5 @@
-import { readFileSync, writeFileSync, readdirSync, existsSync } from "fs";
-import { join } from "path";
+import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
 const rootDir = process.cwd();
 const bunCacheDir = join(rootDir, "node_modules", ".bun");
@@ -12,14 +12,26 @@ if (!existsSync(bunCacheDir)) {
 function findReconcilerFile() {
   const entries = readdirSync(bunCacheDir, { withFileTypes: true });
   for (const entry of entries) {
-    if (!entry.isDirectory() || !entry.name.startsWith("@opentui+react@")) continue;
-    const pkgDir = join(bunCacheDir, entry.name, "node_modules", "@opentui", "react");
+    if (!entry.isDirectory() || !entry.name.startsWith("@opentui+react@"))
+      continue;
+    const pkgDir = join(
+      bunCacheDir,
+      entry.name,
+      "node_modules",
+      "@opentui",
+      "react",
+    );
     if (!existsSync(pkgDir)) continue;
     for (const file of readdirSync(pkgDir)) {
       if (!file.startsWith("chunk-") || !file.endsWith(".js")) continue;
       const fp = join(pkgDir, file);
       const c = readFileSync(fp, "utf-8");
-      if (c.includes("createTextInstance(text, rootContainerInstance, hostContext)")) return fp;
+      if (
+        c.includes(
+          "createTextInstance(text, rootContainerInstance, hostContext)",
+        )
+      )
+        return fp;
     }
   }
   return null;
@@ -38,7 +50,7 @@ if (content.includes("[filiks-patch]")) {
   process.exit(0);
 }
 
-let patched = content;
+const patched = content;
 
 const textInstanceBlock = `    if (!hostContext.isInsideText) {
       throw new Error("Text must be created inside of a text node");

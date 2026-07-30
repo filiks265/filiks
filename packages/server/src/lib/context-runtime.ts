@@ -1,8 +1,8 @@
-import { readFile } from "fs/promises";
-import { join } from "path";
-import { existsSync } from "fs";
-import type { UIMessage } from "ai";
+import { existsSync } from "node:fs";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import type { ModeType } from "@filiks/shared";
+import type { UIMessage } from "ai";
 
 const RULES_FILE_NAMES = ["AGENTS.md", "CLAUDE.md", ".filiks/rules.mdc"];
 const CHARS_PER_TOKEN = 4;
@@ -17,7 +17,8 @@ export class ContextRuntime {
   private maxTokens: number;
 
   constructor(config?: ContextConfig) {
-    this.maxTokens = (config?.maxTokens ?? DEFAULT_MAX_CONTEXT_TOKENS) - TOOL_CALL_RESERVE;
+    this.maxTokens =
+      (config?.maxTokens ?? DEFAULT_MAX_CONTEXT_TOKENS) - TOOL_CALL_RESERVE;
   }
 
   async loadProjectRules(cwd: string): Promise<string> {
@@ -31,7 +32,9 @@ export class ContextRuntime {
             const content = await readFile(fullPath, "utf8");
             const trimmed = content.trim();
             if (trimmed) {
-              parts.push(`<project-rule file="${fileName}">\n${trimmed}\n</project-rule>`);
+              parts.push(
+                `<project-rule file="${fileName}">\n${trimmed}\n</project-rule>`,
+              );
             }
           } catch {
             // skip unreadable files
@@ -60,7 +63,10 @@ export class ContextRuntime {
 
     let available = this.maxTokens - fixedOverhead - 1_000;
     if (available <= 0) {
-      return { messages: messages.slice(-5), trimmed: Math.max(0, messages.length - 5) };
+      return {
+        messages: messages.slice(-5),
+        trimmed: Math.max(0, messages.length - 5),
+      };
     }
 
     const kept: T[] = [];

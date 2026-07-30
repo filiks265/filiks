@@ -1,5 +1,5 @@
-import { hc } from "hono/client";
 import type { AppType } from "@filiks/server";
+import { hc } from "hono/client";
 import { clearAuth, getAuth } from "./auth";
 
 function getFetchUrl(input: Parameters<typeof fetch>[0]): string {
@@ -24,7 +24,11 @@ export const apiClient = hc<AppType>(
       }
 
       try {
-        const response = await fetch(input, { ...init, headers, signal: init?.signal ?? AbortSignal.timeout(30_000) });
+        const response = await fetch(input, {
+          ...init,
+          headers,
+          signal: init?.signal ?? AbortSignal.timeout(30_000),
+        });
         if (response.status === 401) {
           clearAuth();
         }
@@ -32,10 +36,7 @@ export const apiClient = hc<AppType>(
       } catch (err) {
         const url = getFetchUrl(input);
         throw new Error(
-          `Cannot reach the server at ${url}. ` +
-          "Make sure your API server is running. " +
-          "Set API_URL in a .env file next to the binary (e.g., API_URL=https://your-server.com). " +
-          `Original error: ${err instanceof Error ? err.message : String(err)}`,
+          `Cannot reach the server at ${url}. Make sure your API server is running. Set API_URL in a .env file next to the binary (e.g., API_URL=https://your-server.com). Original error: ${err instanceof Error ? err.message : String(err)}`,
         );
       }
     },

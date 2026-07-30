@@ -1,9 +1,9 @@
-import { Hono } from "hono";
+import { db } from "@filiks/database/client";
 // import { HTTPException } from "hono/http-exception";
 import { zValidator } from "@hono/zod-validator";
 import * as Sentry from "@sentry/hono/bun";
+import { Hono } from "hono";
 import { z } from "zod";
-import { db } from "@filiks/database/client";
 import type { AuthenticatedEnv } from "../../middleware/require-auth";
 
 const createSessionSchema = z.object({
@@ -19,7 +19,7 @@ const createSessionValidator = zValidator(
       Sentry.logger.warn("Session creation validation failed", {
         path: c.req.path,
         issues: result.error.issues.length,
-      })
+      });
       return c.json({ error: "Invalid request body" }, 400);
     }
   },
@@ -27,10 +27,9 @@ const createSessionValidator = zValidator(
 
 const app = new Hono<AuthenticatedEnv>()
   .get("/", async (c) => {
-
     const userId = c.get("userId");
     const sessions = await db.session.findMany({
-      where: { userId:userId },
+      where: { userId: userId },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -86,7 +85,6 @@ const app = new Hono<AuthenticatedEnv>()
       data: {
         ...data,
         userId: userId,
-        
       },
     });
 

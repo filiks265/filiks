@@ -1,5 +1,5 @@
-import { execSync } from "child_process";
-import { homedir } from "os";
+import { execSync } from "node:child_process";
+import { homedir } from "node:os";
 
 export function getGitInfo(): { branch: string | null; dirty: boolean } {
   try {
@@ -19,7 +19,7 @@ export function getGitInfo(): { branch: string | null; dirty: boolean } {
 export function getRelativeCwd(): string {
   const cwd = process.cwd();
   const home = homedir();
-  if (cwd === home || cwd.startsWith(home + "/")) {
+  if (cwd === home || cwd.startsWith(`${home}/`)) {
     return `~${cwd.slice(home.length)}`;
   }
   return cwd;

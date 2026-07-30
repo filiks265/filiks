@@ -1,6 +1,6 @@
 import { TextAttributes } from "@opentui/core";
-import { useTheme } from "../providers/theme";
 import { getRelativeCwd } from "../lib/git";
+import { useTheme } from "../providers/theme";
 
 export function HomeStatusBar() {
   const { colors } = useTheme();
