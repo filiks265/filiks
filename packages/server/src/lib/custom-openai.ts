@@ -341,7 +341,7 @@ export function createCustomOpenAIModel(
         );
       }
 
-      const reader = response.body?.getReader();
+      const reader = response.body!.getReader();
       const responseHeaders: Record<string, string> = {};
       response.headers.forEach((v, k) => {
         responseHeaders[k] = v;
