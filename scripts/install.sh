@@ -81,7 +81,12 @@ main() {
   rm -rf "$tmpdir"
 
   echo "Installed filiks to $INSTALL_DIR/$binary"
-  echo "Make sure $INSTALL_DIR is in your PATH"
+  if ! echo ":$PATH:" | grep -q ":$INSTALL_DIR:"; then
+    echo "Add $INSTALL_DIR to your PATH:"
+    echo "  export PATH=\"\$PATH:$INSTALL_DIR\"" >> "$HOME/.bashrc"
+    echo "  export PATH=\"\$PATH:$INSTALL_DIR\"" >> "$HOME/.zshrc" 2>/dev/null || true
+    echo "Then run: source ~/.bashrc"
+  fi
 }
 
 main "$@"
