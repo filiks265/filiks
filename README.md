@@ -10,12 +10,9 @@ curl -fsSL https://raw.githubusercontent.com/filiks265/filiks/main/scripts/insta
 ```
 
 ### Windows
-1. Download `filiks-windows-x64.tar.gz` from the [latest release](https://github.com/filiks265/filiks/releases/latest)
-2. Extract `filiks.exe` and place it in a directory in your `PATH`
-3. Create a `.env` file next to `filiks.exe` with:
-   ```env
-   API_URL=https://filiksserver-production.up.railway.app
-   ```
+```powershell
+irm https://raw.githubusercontent.com/filiks265/filiks/main/install.ps1 | iex
+```
 
 ### Manual
 ```bash
