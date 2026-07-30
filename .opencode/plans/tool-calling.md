@@ -1,92 +1,55 @@
 # Spec: Tool Calling, Message Parts & System Prompt
 
-## Objective
+## Status: IMPLEMENTED
 
-Enable Filiks to call tools (read files, search code, run commands) during
-chat, stream structured message parts (text, reasoning, tool calls) to the
-client, and persist them to the database. Add per-mode system prompts.
+All elements of this spec are now implemented:
 
-## Current State
+| Feature | Status | Details |
+|---------|--------|---------|
+| SSE event schemas | ✅ DONE | text-delta, reasoning-delta, tool-call, done, error |
+| Message.parts JSON field | ✅ DONE | Populated by `toUIMessageStreamResponse` |
+| Tool definitions passed to streamText | ✅ DONE | `getToolContracts(mode)` → `streamText({ tools })` |
+| Tool execution | ✅ DONE | Client-side via `onToolCall` → `ToolRuntime` |
+| System prompt sent to model | ✅ DONE | `buildSystemPrompt({ mode })` |
+| Parts saved to DB | ✅ DONE | Merged in `onFinish` callback |
 
-| Feature | Status |
-|---------|--------|
-| SSE event schemas (tool-call, tool-call-result, reasoning-delta) | Defined |
-| `Message.parts` JSON field in Prisma | Exists, unused |
-| Server handles `text-delta` / `error` from `fullStream` | Done |
-| Server handles `reasoning-delta` / `tool-call` / `tool-call-result` | Ignored |
-| Tool definitions passed to `streamText` | None |
-| Tool execution on server | None |
-| System prompt sent to model | None |
-| Parts saved to DB | Not populated |
+## Current Implementation
 
-## Commands
+### Tool Contracts (shared)
 
-```
-Dev: bun run dev:server
-Build: bun run --filter=@filiks/server build
-```
+`packages/shared/src/schemas.ts` defines:
+- 7 tools: `readFile`, `listDirectory`, `glob`, `grep`, `writeFile`, `editFile`, `bash`
+- Two contract sets: `readOnlyToolContracts` (PLAN mode) and `buildToolContracts` (BUILD mode)
+- Zod input schemas for every tool
 
-## Project Structure (additions)
+### Tool Runtime (CLI)
 
-```
-packages/server/src/lib/tools/
-  index.ts          -- barrel export of all tools
-```
+`packages/cli/src/lib/tool-runtime.ts` provides:
+- `ToolRuntime` class with adapter pattern, permission policy, and audit log
+- `ModePermissionPolicy` — gating by mode (PLAN blocks writes)
+- Normalized `ToolResult` return type
 
-`packages/server/src/routes/chat.ts` is the only modified server file.
-`packages/cli/src/hooks/use-chat.ts` and `packages/cli/src/providers/prompt-config/`
-are the CLI-side modifications.
+`packages/cli/src/lib/local-tools.ts` provides:
+- `LocalToolAdapter` — executes tools locally via filesystem, grep, bash
 
-## Implementation Order
+### Chat Loop (server)
 
-### Step 1A: Stream all event types
+`packages/server/src/routes/chat.ts`:
+- Accepts validated UI messages
+- Merges with previous session messages
+- Calls `streamText` with tools and system prompt
+- Persists completed messages on finish
 
-**chat.ts** -- Extend the `fullStream` loop in `streamAIResponse` to handle
-every part type:
+### Chat Hook (CLI)
 
-- `reasoning-delta` -- accumulate + write SSE `reasoning-delta`
-- `tool-call` -- accumulate into parts array + write SSE `tool-call`
-- `tool-call-result` -- accumulate into parts array + write SSE `tool-call-result`
+`packages/cli/src/hooks/use-chat.ts`:
+- Uses `@ai-sdk/react` `useChat` with `DefaultChatTransport`
+- `onToolCall` handler delegating to `ToolRuntime`
+- Auto-advances when `lastAssistantMessageIsCompleteWithToolCalls`
 
-No tool execution yet -- just parse and forward so the UI can see them.
+### System Prompt
 
-### Step 1B: Persist structured parts
-
-**chat.ts** -- Populate `Message.parts` when saving:
-
-- Build `parts[]` alongside `fullText` as the stream progresses
-- Save both `content` (flat text fallback) and `parts` (structured JSON)
-- Same for INTERRUPTED and ERROR messages
-
-### Step 2A: Define tools
-
-**`packages/server/src/lib/tools/*.ts`** -- Tool definitions using Vercel AI
-SDK's `tool()` helper with `zod` parameter schemas.
-
-Initial tool set TBD.
-
-### Step 2B: Wire tools + system prompt in streamText
-
-**chat.ts**:
-
-```ts
-const result = aiStreamText({
-  model: resolvedModel.model,
-  messages: history,
-  system: systemPrompt,
-  tools: availableTools,
-  abortSignal: abortController.signal,
-});
-```
-
-### Step 2C: Mode-specific system prompts
-
-**PromptConfig** -- Add a `systemPrompt` field that returns different prompts
-per mode (BUILD vs PLAN). Send via API when submitting a chat message.
-
-## Success Criteria
-
-- reasoning-delta appears in SSE stream when models emit thinking traces
-- tool-call / tool-call-result events appear in SSE when model requests tools
-- Messages persisted to DB have populated `parts` JSON array
-- BUILD and PLAN modes send different system prompts
+`packages/server/src/system-prompt.ts`:
+- BUILD mode: read, write, edit, bash tools
+- PLAN mode: read-only tools only
+- Instructions for decisive, batched tool usage

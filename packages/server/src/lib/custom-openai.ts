@@ -89,9 +89,10 @@ function convertPrompt(prompt: LanguageModelV4Prompt): OpenAIMessage[] {
               },
             };
           });
+        if (!text && toolCalls.length === 0) break;
         messages.push({
           role: "assistant",
-          content: toolCalls.length > 0 ? null : (text || null),
+          content: toolCalls.length > 0 ? null : (text || ""),
           ...(toolCalls.length > 0 ? { tool_calls: toolCalls } : {}),
         });
         break;
@@ -291,6 +292,7 @@ export function createCustomOpenAIModel(
         } catch {
           errorDetail = errorBody || response.statusText;
         }
+        console.error(`[${config.name}] doStream body on ${response.status}:`, body);
         throw new Error(
           `${config.name} API error (${response.status}): ${errorDetail}`,
         );
@@ -562,6 +564,7 @@ export function createCustomOpenAIModel(
         } catch {
           errorDetail = errorBody || response.statusText;
         }
+        console.error(`[${config.name}] doGenerate body on ${response.status}:`, body);
         throw new Error(
           `${config.name} API error (${response.status}): ${errorDetail}`,
         );

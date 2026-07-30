@@ -16,7 +16,7 @@ export const COMMANDS: Command[] = [
   },
   {
     name: "agents",
-    description: "Switch agents",
+    description: "Switch mode or agent profile",
     value: "/agents",
     action: (ctx) => {
       ctx.dialog.open({

@@ -2,16 +2,17 @@ import type { ModeType } from "@filiks/shared";
 
 type SystemPromptParams = {
   mode: ModeType;
+  profileSuffix?: string;
 };
 
-export function buildSystemPrompt({ mode }: SystemPromptParams): string {
+export function buildSystemPrompt({ mode, profileSuffix }: SystemPromptParams): string {
   const parts: string[] = [];
 
   parts.push(`You are an expert software engineer working as a coding assistant inside a terminal application.
         The application has two modes the user can switch between:
         - **PLAN** -- Read-only analysis and planning. No file modifications.
         - **BUILD** -- Full implementation with read and write tools`);
-  
+
   if (mode === "PLAN") {
     parts.push(`
                 ## Mode: PLAN
@@ -67,6 +68,10 @@ export function buildSystemPrompt({ mode }: SystemPromptParams): string {
         3. **Batch your tool calls.** Call multiple tools in parallel when possible (e.g. read 5 files at once, not one at a time).
         4. **Use editFile for small changes.** to existing files. Only use writeFile when creating new files or rewriting most of a file. 
         `);
+  }
+
+  if (profileSuffix) {
+    parts.push(`\n## Agent Profile\n\n${profileSuffix}`);
   }
 
   return parts.join("\n");

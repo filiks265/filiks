@@ -28,6 +28,8 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 .eslintcache
 .cache
 *.tsbuildinfo
+*.d.ts.map
+packages/*/src/**/*.d.ts
 
 # IntelliJ based IDEs
 .idea

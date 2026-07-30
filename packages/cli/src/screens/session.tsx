@@ -98,7 +98,7 @@ function SessionChat({ session, initialPrompt} : {session: SessionData, initialP
       {messages.map((msg) => (
         <ChatMessage key={msg.id} msg={msg}/>
       ))}
-      {error && <ErrorMessage message={error.message} />}
+      {error ? <ErrorMessage message={error.message} /> : null}
     </SessionShell>
   );
 }

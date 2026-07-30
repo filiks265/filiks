@@ -18,7 +18,7 @@ List all sessions (summary only).
 
 ### `GET /sessions/:id`
 
-Get session with full message history.
+Get session with full message history and workspace metadata.
 
 **Response `200`:**
 ```json
@@ -26,11 +26,13 @@ Get session with full message history.
   "id": "cuid...",
   "title": "Fix the login bug",
   "cwd": "/home/user/project",
+  "model": "claude-opus-4-6",
+  "mode": "BUILD",
   "createdAt": "...",
   "updatedAt": "...",
   "messages": [
-    { "id": "...", "role": "USER", "content": "Fix this bug", "model": "claude-opus-4-6", "mode": "BUILD", "status": "COMPLETE", "createdAt": "..." },
-    { "id": "...", "role": "ASSISTANT", "content": "Here's the fix...", "model": "claude-opus-4-6", "mode": "BUILD", "status": "COMPLETE", "duration": 15, "createdAt": "..." }
+    { "id": "...", "role": "USER", "content": "Fix this bug", "metadata": { "mode": "BUILD", "model": "claude-opus-4-6" } },
+    { "id": "...", "role": "ASSISTANT", "content": "Here's the fix...", "metadata": { "mode": "BUILD", "model": "claude-opus-4-6", "durationMs": 15000 } }
   ]
 }
 ```
@@ -42,61 +44,42 @@ Get session with full message history.
 
 ### `POST /sessions`
 
-Create a new session with optional initial message.
+Create a new session.
 
 **Request body:**
 ```json
 {
   "title": "Fix the login bug",
-  "cwd": "/home/user/project",
-  "initialMessage": {
-    "role": "USER",
-    "content": "Fix this bug",
-    "mode": "BUILD",
-    "model": "claude-opus-4-6"
-  }
+  "cwd": "/home/user/project"
 }
 ```
 
-**Response `201`:** Full session object with messages.
+**Response `201`:** Full session object.
 
 ## Chat (SSE)
 
-### `POST /chat/:sessionId`
+### `POST /chat`
 
 Send a message and stream the AI response via SSE.
 
 **Request body:**
 ```json
 {
-  "content": "Fix this bug",
+  "id": "session-id",
+  "messages": [
+    {
+      "id": "msg-id",
+      "role": "user",
+      "parts": [{ "type": "text", "text": "Fix this bug" }],
+      "metadata": { "mode": "BUILD", "model": "claude-opus-4-6" }
+    }
+  ],
   "mode": "BUILD",
   "model": "claude-opus-4-6"
 }
 ```
 
 **Response: SSE stream** — see [Streaming docs](../server/streaming.md) for event format.
-
-### `POST /chat/:sessionId/resume`
-
-Resume streaming for the last user message (no new input needed). Useful for auto-resume after interruption.
-
-**Request body:** None.
-
-**Response: SSE stream** — same format as the submit endpoint.
-
-**Response `409`:**
-```json
-{ "error": "Session has no pending user message to resume" }
-```
-
-```json
-{ "error": "Session uses unsupported model: <model>" }
-```
-
-```json
-{ "error": "Session already has an active resume" }
-```
 
 ## Sentry
 
@@ -115,5 +98,5 @@ All errors follow this shape:
 HTTP status codes:
 - `400` — Validation error
 - `404` — Session not found
-- `409` — Conflict (e.g., nothing to resume)
+- `409` — Conflict
 - `500` — Internal server error

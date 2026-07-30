@@ -1,13 +1,21 @@
 {
-    "name": "filiks",
-    "version": "1.0.0",
-    "workspaces": ["packages/*"],
-    "scripts": {
-        "dev:cli": "bun run --watch packages/cli/src/index.tsx",
-        "dev:server": "bun run --hot packages/server/src/index.ts",
-        "build:cli": "bun run --filter @filiks/cli build",
+  "name": "filiks",
+  "version": "1.0.0",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "dev:cli": "bun run --watch packages/cli/src/index.tsx",
+    "dev:server": "bun run --hot packages/server/src/index.ts",
+    "build:cli": "bun run --filter @filiks/cli build",
     "build:binary": "bun run --filter @filiks/cli build:binary",
     "link:cli": "bun run build:cli && cd packages/cli && bun link",
-    "release": "bun run build:binary && gh release create"
+    "release": "bun run build:binary && gh release create",
+    "typecheck": "for d in shared server cli database; do bun x tsc --noEmit -p \"packages/$d\" || exit 1; done",
+    "test": "bun test",
+    "lint": "bun x biome check .",
+    "verify": "bun run typecheck && bun run test && bun run lint"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@biomejs/biome": "^1.9.0"
   }
 }
