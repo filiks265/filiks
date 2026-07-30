@@ -13,7 +13,10 @@ if (process.argv[1] === "update" || process.argv[2] === "update") {
     const { update } = await import("./lib/update");
     await update();
   } catch (err) {
-    console.error("Update failed:", err instanceof Error ? err.message : String(err));
+    console.error(
+      "Update failed:",
+      err instanceof Error ? err.message : String(err),
+    );
   }
   process.exit(0);
 }
