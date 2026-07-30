@@ -14,11 +14,13 @@ import {
 } from "@filiks/shared";
 import { apiClient } from "../lib/api-client";
 import { getAuth } from "../lib/auth";
-import { executeLocalTool } from "../lib/local-tools";
+import { ToolRuntime, ModePermissionPolicy } from "../lib/tool-runtime";
+import { LocalToolAdapter } from "../lib/local-tools";
 
 export type ChatMessageMetadata = {
   mode?: ModeType;
   model?: SupportedChatModelId | string;
+  profile?: string;
   durationMs?: number;
   usage?: LanguageModelUsage;
 };
@@ -62,6 +64,7 @@ export function useChat(sessionId: string, initialMessages: Message[]) {
             messages: requestMessages,
             mode: message.metadata?.mode ?? metadata?.mode,
             model: message.metadata?.model ?? metadata?.model,
+            profile: message.metadata?.profile ?? metadata?.profile,
           },
         };
       },
@@ -69,6 +72,15 @@ export function useChat(sessionId: string, initialMessages: Message[]) {
   }, [sessionId]);
 
   const apiUrlRef = useRef(apiClient.chat.$url().toString());
+  const runtimeRef = useRef<ToolRuntime | null>(null);
+
+  if (!runtimeRef.current) {
+    runtimeRef.current = new ToolRuntime(
+      new LocalToolAdapter(),
+      new ModePermissionPolicy(),
+    );
+  }
+  const runtime = runtimeRef.current;
 
   const chat = useAiChat({
     id: sessionId,
@@ -77,22 +89,23 @@ export function useChat(sessionId: string, initialMessages: Message[]) {
     onToolCall({ toolCall }) {
       const mode = chat.messages.at(-1)?.metadata?.mode ?? "BUILD";
 
-      void executeLocalTool(toolCall.toolName, toolCall.input, mode)
-        .then((output) =>
-          chat.addToolOutput({
-            tool: toolCall.toolName as keyof ChatTools,
-            toolCallId: toolCall.toolCallId,
-            output,
-          }),
-        )
-        .catch((error) =>
-          chat.addToolOutput({
-            tool: toolCall.toolName as keyof ChatTools,
-            toolCallId: toolCall.toolCallId,
-            state: "output-error",
-            errorText: error instanceof Error ? error.message : String(error),
-          }),
-        );
+      void runtime.execute(toolCall.toolName, toolCall.input, mode)
+        .then((result) => {
+          if (result.success) {
+            chat.addToolOutput({
+              tool: toolCall.toolName as keyof ChatTools,
+              toolCallId: toolCall.toolCallId,
+              output: result.data,
+            });
+          } else {
+            chat.addToolOutput({
+              tool: toolCall.toolName as keyof ChatTools,
+              toolCallId: toolCall.toolCallId,
+              state: "output-error",
+              errorText: result.error ?? "Unknown error",
+            });
+          }
+        });
     },
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
   });
@@ -115,12 +128,14 @@ export function useChat(sessionId: string, initialMessages: Message[]) {
       userText: string;
       mode: ModeType;
       model: SupportedChatModelId;
+      profile?: string;
     }) => {
       return chat.sendMessage({
         text: params.userText,
         metadata: {
           mode: params.mode,
           model: params.model,
+          profile: params.profile,
         },
       });
     },

@@ -8,6 +8,7 @@ import type { AuthenticatedEnv } from "../../middleware/require-auth";
 
 const createSessionSchema = z.object({
   title: z.string(),
+  cwd: z.string().optional(),
 });
 
 const createSessionValidator = zValidator(

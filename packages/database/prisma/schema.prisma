@@ -16,6 +16,9 @@ model Session {
   id String @id @default(cuid())
   userId String
   title String
+  cwd String?
+  model String?
+  mode String?
   createdAt DateTime @default(now())
   UpdatedAt DateTime @updatedAt
   messages Json @default("[]")

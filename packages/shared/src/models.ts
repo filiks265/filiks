@@ -95,36 +95,19 @@ export function getModelsForEnv(availableEnv: string[]): SupportedChatModel[] {
   );
 }
 
-export const DEFAULT_CHAT_MODEL_ID = "nemotron-3-ultra-free";
+export const DEFAULT_CHAT_MODEL_ID = "north-mini-code-free";
 
 const ZEN_CONSOLE_MODEL_IDS = new Set([
-  "nemotron-3-ultra-free",
   "deepseek-v4-flash-free",
   "north-mini-code-free",
   "big-pickle",
 ]);
 
 const NVIDIA_CONSOLE_MODEL_IDS = new Set([
-  "google/gemma-2-2b-it",
-  "google/gemma-3n-e2b-it",
-  "google/gemma-3n-e4b-it",
-  "google/gemma-4-31b-it",
-  "meta/llama-3.1-8b-instruct",
   "meta/llama-3.1-70b-instruct",
-  "meta/llama-3.2-11b-vision-instruct",
   "meta/llama-3.3-70b-instruct",
-  "meta/llama-4-maverick-17b-128e-instruct",
-  "minimaxai/minimax-m3",
-  "mistralai/mistral-nemotron",
-  "mistralai/mistral-small-4-119b-2603",
+  "google/gemma-4-31b-it",
   "nvidia/nemotron-3-nano-30b-a3b",
-  "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
-  "nvidia/nemotron-mini-4b-instruct",
-  "nvidia/nvidia-nemotron-nano-9b-v2",
-  "openai/gpt-oss-20b",
-  "sarvamai/sarvam-m",
-  "stepfun-ai/step-3.5-flash",
-  "stepfun-ai/step-3.7-flash",
 ]);
 
 export const ZEN_MODEL_PRIORITY: string[] = [...ZEN_MODELS_INTERNAL]

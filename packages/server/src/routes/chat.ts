@@ -18,6 +18,7 @@ import {
   type ToolContracts,
 } from "@filiks/shared";
 import { buildSystemPrompt } from "../system-prompt";
+import { ContextRuntime } from "../lib/context-runtime";
 import type { AuthenticatedEnv } from "../../middleware/require-auth";
 // import {requireCreditsBalance} from "../middleware/require-credits-balance";
 // import {calculatedCreditsForUsage} from "../lib/credits";
@@ -26,6 +27,7 @@ import { isSupportedChatModel, resolveChatModel } from "../lib/models";
 type ChatMessageMetadata = {
   mode?: ModeType;
   model?: string;
+  profile?: string;
   durationMs?: number;
   usage?: LanguageModelUsage;
 };
@@ -52,6 +54,7 @@ const submitSchema = z.object({
     .min(1),
   mode: modeSchema,
   model: z.string().refine(isSupportedChatModel, "Unsupported model"),
+  profile: z.string().optional(),
 });
 
 const submitValidator = zValidator("json", submitSchema, (result, c) => {
@@ -77,7 +80,7 @@ const app = new Hono<AuthenticatedEnv>().post(
   submitValidator,
   async (c) => {
     const userId = c.get("userId");
-    const { id, messages, mode, model } = c.req.valid("json");
+    const { id, messages, mode, model, profile } = c.req.valid("json");
 
     const session = await db.session.findUnique({
       where: { id, userId },
@@ -116,12 +119,35 @@ const app = new Hono<AuthenticatedEnv>().post(
       tools,
     });
 
-    const modeMessages = await convertToModelMessages(nextMessages, { tools });
+    const contextRuntime = new ContextRuntime();
+    const cwd = session.cwd ?? process.cwd();
+    const projectRules = await contextRuntime.loadProjectRules(cwd);
+    const systemPrompt = contextRuntime.buildSystemPrompt(
+      buildSystemPrompt({
+        mode,
+        profileSuffix: profile
+          ? `You are using the "${profile}" profile.`
+          : undefined,
+      }),
+      projectRules,
+    );
+
+    const trimmedResult = contextRuntime.trimMessages(
+      nextMessages,
+      systemPrompt,
+      projectRules,
+      Object.keys(tools).join(", "),
+    );
+
+    const modeMessages = await convertToModelMessages(
+      trimmedResult.messages as unknown as FiliksUIMessage[],
+      { tools },
+    );
     let completedUsage: LanguageModelUsage | null = null;
 
     const result = streamText({
       model: resolvedModel.model,
-      system: buildSystemPrompt({ mode }),
+      system: systemPrompt,
       messages: modeMessages,
       tools,
       providerOptions: resolvedModel.providerOptions,
@@ -131,7 +157,7 @@ const app = new Hono<AuthenticatedEnv>().post(
     });
 
     return result.toUIMessageStreamResponse<FiliksUIMessage>({
-      originalMessages: nextMessages,
+      originalMessages: trimmedResult.messages as unknown as FiliksUIMessage[],
       messageMetadata({part}) {
         if (part.type === "start"){
           return {mode, model};
