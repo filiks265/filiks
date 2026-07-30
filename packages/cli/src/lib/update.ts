@@ -11,8 +11,7 @@ import {
   readdirSync,
 } from "fs";
 import { execSync } from "child_process";
-
-export const VERSION = "v0.2.5";
+import { VERSION } from "./version";
 
 const REPO = "filiks265/filiks";
 
