@@ -3,6 +3,10 @@ set -euo pipefail
 
 REPO="filiks265/filiks"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
+if [ ! -w "$INSTALL_DIR" ]; then
+  INSTALL_DIR="$HOME/.local/bin"
+  echo "Falling back to $INSTALL_DIR"
+fi
 
 detect_platform() {
   local os arch
