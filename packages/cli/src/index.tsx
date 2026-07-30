@@ -8,7 +8,7 @@ import { NewSession } from "./screens/new-session";
 import { Session } from "./screens/session";
 import { existsSync, unlinkSync } from "fs";
 
-if (process.argv[2] === "update") {
+if (process.argv[1] === "update" || process.argv[2] === "update") {
   const { update } = await import("./lib/update");
   await update();
   process.exit(0);
