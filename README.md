@@ -17,7 +17,7 @@ irm https://raw.githubusercontent.com/filiks265/filiks/main/install.ps1 | iex
 ### Manual
 ```bash
 # Download the archive for your platform
-curl -fsSL https://github.com/filiks265/filiks/releases/download/v0.2.12/filiks-linux-x64.tar.gz | sudo tar xz -C /usr/local/bin
+curl -fsSL https://github.com/filiks265/filiks/releases/latest/download/filiks-linux-x64.tar.gz | sudo tar xz -C /usr/local/bin
 # Make sure /usr/local/bin is in your PATH
 ```
 

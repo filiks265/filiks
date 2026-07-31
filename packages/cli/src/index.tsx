@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { existsSync, writeFileSync, unlinkSync } from "node:fs";
+import { existsSync, unlinkSync } from "node:fs";
 import { createCliRenderer } from "@opentui/core";
 import { createRoot } from "@opentui/react";
 import { RouterProvider, createMemoryRouter } from "react-router";
@@ -7,8 +7,6 @@ import { RootLayout } from "./layouts/root-layout";
 import { Home } from "./screens/home";
 import { NewSession } from "./screens/new-session";
 import { Session } from "./screens/session";
-
-writeFileSync("/tmp/filiks-argv.json", JSON.stringify(process.argv));
 
 if (process.argv[1] === "update" || process.argv[2] === "update") {
   try {

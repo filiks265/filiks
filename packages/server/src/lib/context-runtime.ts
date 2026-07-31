@@ -8,6 +8,26 @@ const RULES_FILE_NAMES = ["AGENTS.md", "CLAUDE.md", ".filiks/rules.mdc"];
 const CHARS_PER_TOKEN = 4;
 const DEFAULT_MAX_CONTEXT_TOKENS = 64_000;
 const TOOL_CALL_RESERVE = 4_000;
+const MAX_TOOL_PAIRS = 15;
+
+function hasToolCallParts(message: { parts?: unknown[] }): boolean {
+  return (message.parts ?? []).some((part) => {
+    const type = (part as { type?: unknown }).type;
+    return (
+      typeof type === "string" &&
+      (type === "tool-invocation" ||
+        type === "dynamic-tool" ||
+        type.startsWith("tool-"))
+    );
+  });
+}
+
+function hasToolResultParts(message: { parts?: unknown[] }): boolean {
+  return (message.parts ?? []).some((part) => {
+    const type = (part as { type?: unknown }).type;
+    return type === "tool-result";
+  });
+}
 
 export type ContextConfig = {
   maxTokens?: number;
@@ -84,6 +104,38 @@ export class ContextRuntime {
     }
 
     return { messages: kept, trimmed };
+  }
+
+  trimToolHistory<T extends { id: string; role?: string; parts?: unknown[] }>(
+    messages: T[],
+    maxToolPairs: number = MAX_TOOL_PAIRS,
+  ): { messages: T[]; trimmed: number } {
+    if (messages.length === 0) return { messages, trimmed: 0 };
+
+    let keptFrom = 0;
+    let pairs = 0;
+
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const message = messages[i]!;
+      if (message.role === "assistant" && hasToolCallParts(message)) {
+        pairs++;
+        if (pairs > maxToolPairs) {
+          keptFrom = i + 1;
+          const next = messages[keptFrom];
+          if (next && next.role === "user" && hasToolResultParts(next)) {
+            keptFrom++;
+          }
+          break;
+        }
+      }
+    }
+
+    if (keptFrom === 0) return { messages, trimmed: 0 };
+
+    return {
+      messages: messages.slice(keptFrom),
+      trimmed: keptFrom,
+    };
   }
 
   buildSystemPrompt(base: string, projectRules: string): string {

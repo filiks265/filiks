@@ -22,14 +22,27 @@ jobs:
           bun-version: latest
       - run: cd packages/cli && bun install --frozen-lockfile
       - run: bun scripts/patch-opentui-reconciler.js
-      - run: cd packages/cli && bun build --compile --define FILIKS_VERSION='"${{ github.ref_name }}"' ./src/index.tsx --outfile dist/filiks
+      - name: Build binary (Linux)
         if: matrix.target != 'windows-x64'
-      - run: |
+        env:
+          FILIKS_VERSION: ${{ github.ref_name }}
+          FILIKS_CLERK_FRONTEND_API: ${{ secrets.CLERK_FRONTEND_API }}
+          FILIKS_CLERK_OAUTH_CLIENT_ID: ${{ secrets.CLERK_OAUTH_CLIENT_ID }}
+        run: cd packages/cli && bun run scripts/build-binary.ts
+      - name: Build binary (Windows)
+        if: matrix.target == 'windows-x64'
+        env:
+          FILIKS_VERSION: ${{ github.ref_name }}
+          FILIKS_CLERK_FRONTEND_API: ${{ secrets.CLERK_FRONTEND_API }}
+          FILIKS_CLERK_OAUTH_CLIENT_ID: ${{ secrets.CLERK_OAUTH_CLIENT_ID }}
+        shell: pwsh
+        run: |
           curl.exe -fsSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.14/bun-windows-x64-baseline.zip -o bun-baseline.zip
           tar -xf bun-baseline.zip
           $bun = Get-ChildItem -Recurse -Filter bun.exe | Select-Object -First 1 -ExpandProperty FullName
-          & $bun build --compile --define FILIKS_VERSION='"${{ github.ref_name }}"' packages/cli/src/index.tsx --outfile packages/cli/dist/filiks
-        if: matrix.target == 'windows-x64'
+          cd packages/cli
+          $env:BUN_BINARY = $bun
+          bun run scripts/build-binary.ts
       - run: cd packages/cli/dist && tar -czf filiks-${{ matrix.target }}.tar.gz --exclude='*.tar.gz' filiks*
       - uses: actions/upload-artifact@v4
         with:

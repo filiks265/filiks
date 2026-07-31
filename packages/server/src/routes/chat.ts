@@ -1,6 +1,7 @@
 import type { Prisma } from "@filiks/database";
 import { db } from "@filiks/database/client";
 import {
+  FREE_MODEL_PRIORITY,
   type ModeType,
   type ToolContracts,
   getToolContracts,
@@ -10,9 +11,13 @@ import { zValidator } from "@hono/zod-validator";
 import {
   type InferUITools,
   type LanguageModelUsage,
+  type TextStreamPart,
   type UIMessage,
+  UI_MESSAGE_STREAM_HEADERS,
   convertToModelMessages,
+  createUIMessageStreamResponse,
   streamText,
+  toUIMessageStream,
   validateUIMessages,
 } from "ai";
 import { Hono } from "hono";
@@ -92,7 +97,6 @@ const app = new Hono<AuthenticatedEnv>().post(
 
     const startTime = Date.now();
     const tools = getToolContracts(mode);
-    const resolvedModel = resolveChatModel(model);
     const previousMessages = Array.isArray(session.messages)
       ? (session.messages as unknown as FiliksUIMessage[])
       : [];
@@ -138,80 +142,156 @@ const app = new Hono<AuthenticatedEnv>().post(
       projectRules,
       Object.keys(tools).join(", "),
     );
+    const toolTrimmedResult = contextRuntime.trimToolHistory(
+      trimmedResult.messages,
+    );
+    const trimmedMessages = toolTrimmedResult.messages;
 
     const modeMessages = await convertToModelMessages(
-      trimmedResult.messages as unknown as FiliksUIMessage[],
+      trimmedMessages as unknown as FiliksUIMessage[],
       { tools },
     );
     let completedUsage: LanguageModelUsage | null = null;
 
-    const result = streamText({
-      model: resolvedModel.model,
-      system: systemPrompt,
-      messages: modeMessages,
-      tools,
-      providerOptions: resolvedModel.providerOptions,
-      onFinish(event) {
-        completedUsage = event.totalUsage;
-      },
-    });
+    const fallbackChain = [
+      model,
+      ...FREE_MODEL_PRIORITY.filter((candidate) => candidate !== model),
+    ];
+    let lastError: unknown = null;
 
-    return result.toUIMessageStreamResponse<FiliksUIMessage>({
-      originalMessages: trimmedResult.messages as unknown as FiliksUIMessage[],
-      messageMetadata({ part }) {
-        if (part.type === "start") {
-          return { mode, model };
-        }
+    for (const candidateModelId of fallbackChain) {
+      const candidate = resolveChatModel(candidateModelId);
+      const result = streamText({
+        model: candidate.model,
+        system: systemPrompt,
+        messages: modeMessages,
+        tools,
+        providerOptions: candidate.providerOptions,
+        onFinish(event) {
+          completedUsage = event.totalUsage;
+        },
+      });
 
-        if (part.type !== "finish") return undefined;
+      const reader = result.stream.getReader();
+      type StreamReadResult = Awaited<ReturnType<typeof reader.read>>;
+      type StreamElement = Extract<StreamReadResult, { done: false }>["value"];
+      let firstChunk: StreamReadResult;
+      try {
+        firstChunk = await reader.read();
+      } catch (error) {
+        lastError = error;
+        continue;
+      }
 
-        return {
-          mode,
-          model,
-          durationMs: Date.now() - startTime,
-          ...(completedUsage ? { usage: completedUsage } : {}),
-        };
-      },
-      async onFinish(event) {
-        if (event.isAborted) return;
+      if (firstChunk.done || !firstChunk.value) {
+        lastError = new Error("Model returned an empty response");
+        continue;
+      }
 
-        if (hasPendingToolCalls(event.responseMessage)) return;
+      if (firstChunk.value.type === "error") {
+        lastError = firstChunk.value.error;
+        continue;
+      }
 
-        await db.session.update({
-          where: { id, userId },
-          data: {
-            messages: event.messages as unknown as Prisma.InputJsonValue,
+      const firstValue = firstChunk.value;
+      const stream = new ReadableStream<StreamElement>({
+        start(controller) {
+          controller.enqueue(firstValue);
+        },
+        async pull(controller) {
+          try {
+            const { done, value } = await reader.read();
+            if (done) {
+              controller.close();
+            } else {
+              controller.enqueue(value);
+            }
+          } catch (error) {
+            controller.error(error);
+          }
+        },
+        cancel() {
+          void reader.cancel();
+        },
+      });
+
+      const responseModel = candidate.modelId;
+      return createUIMessageStreamResponse({
+        headers: UI_MESSAGE_STREAM_HEADERS,
+        stream: toUIMessageStream({
+          stream,
+          tools,
+          originalMessages: trimmedMessages as unknown as FiliksUIMessage[],
+          messageMetadata({ part }) {
+            if (part.type === "start") {
+              return { mode, model: responseModel };
+            }
+
+            if (part.type !== "finish") return undefined;
+
+            return {
+              mode,
+              model: responseModel,
+              durationMs: Date.now() - startTime,
+              ...(completedUsage ? { usage: completedUsage } : {}),
+            };
           },
-        });
+          async onFinish(event) {
+            if (event.isAborted) return;
 
-        // Billing commented out — implement later
-        // if (!completedUsage) return;
+            if (hasPendingToolCalls(event.responseMessage)) return;
 
-        // try {
-        //   const billableUsage = calculateCreditsForUsage({
-        //     provider: resolvedModel.provider,
-        //     model: resolvedModel.modelId,
-        //     usage: completedUsage,
-        //   });
+            await db.session.update({
+              where: { id, userId },
+              data: {
+                messages: event.messages as unknown as Prisma.InputJsonValue,
+              },
+            });
 
-        //   await ingestAiUsage({
-        //     externalCustomerId: userId,
-        //     eventId: `chat-message:${event.responseMessage.id}`,
-        //     credits: billableUsage.credits,
-        //   });
-        // } catch (error) {
-        //   console.error("Failed to ingest Polar Ai Usage for chat message", {
-        //     error,
-        //     sessionId: id,
-        //     messageId: event.responseMessage.id,
-        //     userId,
-        //   });
-        // }
-      },
-      onError(error) {
-        return error instanceof Error ? error.message : String(error);
-      },
+            // Billing commented out — implement later
+            // if (!completedUsage) return;
+
+            // try {
+            //   const billableUsage = calculateCreditsForUsage({
+            //     provider: resolvedModel.provider,
+            //     model: resolvedModel.modelId,
+            //     usage: completedUsage,
+            //   });
+
+            //   await ingestAiUsage({
+            //     externalCustomerId: userId,
+            //     eventId: `chat-message:${event.responseMessage.id}`,
+            //     credits: billableUsage.credits,
+            //   });
+            // } catch (error) {
+            //   console.error("Failed to ingest Polar Ai Usage for chat message", {
+            //     error,
+            //     sessionId: id,
+            //     messageId: event.responseMessage.id,
+            //     userId,
+            //   });
+            // }
+          },
+          onError(error) {
+            return error instanceof Error ? error.message : String(error);
+          },
+        }),
+      });
+    }
+
+    console.error("[chat] all models failed", {
+      model,
+      fallbackChain,
+      lastError,
     });
+    return c.json(
+      {
+        error: `Model request failed: ${
+          lastError instanceof Error ? lastError.message : String(lastError)
+        }`,
+      },
+      502,
+    );
   },
 );
 
