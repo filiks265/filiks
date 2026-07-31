@@ -29,8 +29,9 @@ describe("ContextRuntime.trimToolHistory", () => {
       text("hello"),
     ];
 
-    const { messages: kept, trimmed } =
-      new ContextRuntime().trimToolHistory(messages);
+    const { messages: kept, trimmed } = new ContextRuntime().trimToolHistory(
+      messages,
+    );
 
     expect(trimmed).toBe(10);
     expect(kept).toHaveLength(31);
@@ -43,8 +44,9 @@ describe("ContextRuntime.trimToolHistory", () => {
   test("returns messages unchanged when under the limit", () => {
     const messages = [call(0), result(0), text("hi")];
 
-    const { messages: kept, trimmed } =
-      new ContextRuntime().trimToolHistory(messages);
+    const { messages: kept, trimmed } = new ContextRuntime().trimToolHistory(
+      messages,
+    );
 
     expect(trimmed).toBe(0);
     expect(kept).toHaveLength(3);
